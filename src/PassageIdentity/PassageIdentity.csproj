@@ -1,7 +1,46 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AnalysisLevel>latest</AnalysisLevel>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<!--<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>-->
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<WarningsNotAsErrors>CA1014,CA1812,CS1591</WarningsNotAsErrors>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<EmbedAllSources>true</EmbedAllSources>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>passage-identity</PackageId>
+		<Company>Clinical Support Systems</Company>
+		<Description>Fully passwordless authentication to reduce friction for your users and provide best-in-class security.</Description>
+		<Copyright>2023 Clinical Support Systems</Copyright>
+		<PackageProjectUrl>https://github.com/Clinical-Support-Systems/passage-dotnet</PackageProjectUrl>
+		<Authors>Kori Francis</Authors>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>passage; passkey;</PackageTags>
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+		<PackageReference Include="System.Text.Json" Version="7.0.2" />
+	</ItemGroup>
 
 </Project>

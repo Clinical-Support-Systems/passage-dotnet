@@ -4,8 +4,8 @@ using System.Text;
 
 namespace PassageIdentity
 {
-    public class PassageAuthentication
+    public static class PassageConsts
     {
-        
+        public const string NamedClient = "Passage";
     }
 }

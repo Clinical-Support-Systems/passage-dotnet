@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PassageIdentity
 {
-    public class Management
+    public class PassageManagement
     {
     }
 }
