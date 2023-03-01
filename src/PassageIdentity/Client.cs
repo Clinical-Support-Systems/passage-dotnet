@@ -1,9 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace PassageIdentity
 {
     public class PassageClient
     {
+        private readonly ILogger _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IPassageConfig _passageConfig;
         private PassageAuthentication? _authentication;
 
         private PassageManagement? _management;
@@ -21,13 +24,16 @@ namespace PassageIdentity
 
         public PassageClient(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig passageConfig)
         {
+            _logger = logger;
+            _httpClientFactory = httpClientFactory;
+            _passageConfig = passageConfig;
         }
 
         public PassageAuthentication Authentication
         {
             get
             {
-                _authentication ??= new();
+                _authentication ??= new(_logger, _httpClientFactory, _passageConfig);
                 return _authentication;
             }
         }

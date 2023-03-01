@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
@@ -10,7 +10,7 @@
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<!--<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>-->
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<WarningsNotAsErrors>CA1014,CA1812,CS1591</WarningsNotAsErrors>
+		<WarningsNotAsErrors>CA1014,CA1812,CS1591,CA2201</WarningsNotAsErrors>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<EmbedAllSources>true</EmbedAllSources>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>

@@ -9,15 +9,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PassageIdentity", "src\PassageIdentity\PassageIdentity.csproj", "{70303E00-3D33-4B8F-AB1A-5327725D9ECA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassageIdentity", "src\PassageIdentity\PassageIdentity.csproj", "{70303E00-3D33-4B8F-AB1A-5327725D9ECA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PassageIdentity.Tests", "tests\PassageIdentity.Tests\PassageIdentity.Tests.csproj", "{CC8E9F6F-4D91-4514-9DFA-1CBB372A9DE3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassageIdentity.Tests", "tests\PassageIdentity.Tests\PassageIdentity.Tests.csproj", "{CC8E9F6F-4D91-4514-9DFA-1CBB372A9DE3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SDK", "SDK", "{4AFF6FEC-AAD4-49C1-9FBB-923EC9427932}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Example", "Example", "{27F9D208-27E5-4648-9FEF-D03D44C4986E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PassageIdentity.ExampleApp", "example\PassageIdentity.ExampleApp\PassageIdentity.ExampleApp.csproj", "{180A72AD-B580-4B34-839E-1D6FEB857A3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassageIdentity.ExampleApp", "example\PassageIdentity.ExampleApp\PassageIdentity.ExampleApp.csproj", "{180A72AD-B580-4B34-839E-1D6FEB857A3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,7 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{70303E00-3D33-4B8F-AB1A-5327725D9ECA} = {4AFF6FEC-AAD4-49C1-9FBB-923EC9427932}
 		{CC8E9F6F-4D91-4514-9DFA-1CBB372A9DE3} = {4AFF6FEC-AAD4-49C1-9FBB-923EC9427932}
-		{180A72AD-B580-4B34-839E-1D6FEB857A3B} = {C59BD3BE-1493-43CE-AE79-92EC8599907D}
+		{180A72AD-B580-4B34-839E-1D6FEB857A3B} = {27F9D208-27E5-4648-9FEF-D03D44C4986E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2268ABEE-7A36-4E67-B398-394AC8A1BD16}

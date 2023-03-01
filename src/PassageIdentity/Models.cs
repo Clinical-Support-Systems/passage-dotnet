@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace PassageIdentity
@@ -94,6 +95,18 @@ namespace PassageIdentity
         public virtual User? User { get; set; }
     }
 
+    [JsonConverter(typeof(CustomJsonStringEnumConverter))]
+    public enum UserStatus
+    {
+        [EnumMember(Value = "active")]
+        Active,
+        [EnumMember(Value = "inactive")]
+        Inactive,
+        [EnumMember(Value = "pending")]
+        Pending,
+        UserIDDoesNotExist = -1,
+    }
+
     public partial class User
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -118,10 +131,10 @@ namespace PassageIdentity
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("status")]
-        public virtual string? Status { get; set; }
+        public virtual UserStatus? Status { get; set; }
 
         [JsonPropertyName("user_metadata")]
-        public virtual Dictionary<string, string> UserMetadata { get; } = new();
+        public virtual Dictionary<string, object> UserMetadata { get; } = new();
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("webauthn")]

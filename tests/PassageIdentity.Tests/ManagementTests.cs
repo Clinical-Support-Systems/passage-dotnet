@@ -1,6 +1,6 @@
 namespace PassageIdentity.Tests
 {
-    public class ClientTests
+    public class ManagementTests
     {
         [Fact]
         public void Test1()
