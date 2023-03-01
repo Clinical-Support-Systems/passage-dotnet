@@ -4,11 +4,39 @@ using System.Text.Json.Serialization;
 
 namespace PassageIdentity
 {
+    [JsonConverter(typeof(CustomJsonStringEnumConverter))]
+    public enum UserStatus
+    {
+        [EnumMember(Value = "active")]
+        Active,
+
+        [EnumMember(Value = "inactive")]
+        Inactive,
+
+        [EnumMember(Value = "pending")]
+        Pending,
+
+        UserIDDoesNotExist = -1,
+    }
+
+    [JsonConverter(typeof(CustomJsonStringEnumConverter))]
+    public enum AllowedIdentifier
+    {
+        [EnumMember(Value = "email")]
+        Email,
+
+        [EnumMember(Value = "phone")]
+        Phone,
+
+        [EnumMember(Value = "both")]
+        Both
+    }
+
     public partial class App
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("allowed_identifier")]
-        public virtual string? AllowedIdentifier { get; set; }
+        public virtual AllowedIdentifier? AllowedIdentifier { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("auth_origin")]
@@ -67,93 +95,6 @@ namespace PassageIdentity
         public virtual Dictionary<string, string>? UserMetadataSchema { get; } = new();
     }
 
-    public class Device
-    {
-        /// <summary>
-        /// The ID of the webAuthn device used for authentication
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("id")]
-        public virtual string? Id { get; set; }
-
-        /// <summary>
-        /// The CredID for this webAuthn device (encoded to match what is stored in psg_cred_obj)
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("cred_id")]
-        public virtual string? CredId { get; set; }
-
-        /// <summary>
-        /// The UserID for this webAuthn device
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("user_id")]
-        public virtual string? UserId { get; set; }
-
-        /// <summary>
-        /// The friendly name for the webAuthn device used to authenticate
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("friendly_name")]
-        public virtual string? FriendlyName { get; set; }
-
-        /// <summary>
-        /// The Credential Type
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("type")]
-        public virtual string? CredentialType { get; set; }
-
-        /// <summary>
-        /// How many times this webAuthn device has been used to authenticate the user
-        /// </summary>
-        [JsonPropertyName("usage_count")]
-        public virtual long UsageCount { get; set; }
-
-        /// <summary>
-        /// The last time this webAuthn device was updated
-        /// </summary>
-        [JsonPropertyName("updated_at")]
-        public virtual DateTime UpdatedAt { get; set; }
-
-        /// <summary>
-        /// The first time this webAuthn device was used to authenticate the user
-        /// </summary>
-        [JsonPropertyName("created_at")]
-        public virtual DateTime CreatedAt { get; set; }
-
-        /// <summary>
-        /// The last time this webAuthn device was used to authenticate the user
-        /// </summary>
-        [JsonPropertyName("last_login_at")]
-        public virtual DateTime LastLoginAt { get; set; }
-    }
-
-    public partial class Layouts
-    {
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("profile")]
-        public virtual Dictionary<string, object>? Profile { get; }
-
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("registration")]
-        public virtual Dictionary<string, object>? Registration { get; }
-    }
-
-    public partial class PassageApp
-    {
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("app")]
-        public virtual App? App { get; set; }
-    }
-
-    public partial class PassageAuthResult
-    {
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonPropertyName("auth_result")]
-        public virtual AuthResult? Result { get; set; }
-    }
-
     public partial class AuthResult
     {
         [JsonPropertyName("auth_token")]
@@ -169,7 +110,140 @@ namespace PassageIdentity
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("refresh_token_expiration")]
-        public virtual long? RefreshTokenExpiration { get; set; }   
+        public virtual long? RefreshTokenExpiration { get; set; }
+    }
+
+    public class Device
+    {
+        /// <summary>
+        /// The first time this webAuthn device was used to authenticate the user
+        /// </summary>
+        [JsonPropertyName("created_at")]
+        public virtual DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// The Credential Type
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("type")]
+        public virtual string? CredentialType { get; set; }
+
+        /// <summary>
+        /// The CredID for this webAuthn device (encoded to match what is stored in psg_cred_obj)
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("cred_id")]
+        public virtual string? CredId { get; set; }
+
+        /// <summary>
+        /// The friendly name for the webAuthn device used to authenticate
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("friendly_name")]
+        public virtual string? FriendlyName { get; set; }
+
+        /// <summary>
+        /// The ID of the webAuthn device used for authentication
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("id")]
+        public virtual string? Id { get; set; }
+
+        /// <summary>
+        /// The last time this webAuthn device was used to authenticate the user
+        /// </summary>
+        [JsonPropertyName("last_login_at")]
+        public virtual DateTime LastLoginAt { get; set; }
+
+        /// <summary>
+        /// The last time this webAuthn device was updated
+        /// </summary>
+        [JsonPropertyName("updated_at")]
+        public virtual DateTime UpdatedAt { get; set; }
+
+        /// <summary>
+        /// How many times this webAuthn device has been used to authenticate the user
+        /// </summary>
+        [JsonPropertyName("usage_count")]
+        public virtual long UsageCount { get; set; }
+
+        /// <summary>
+        /// The UserID for this webAuthn device
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("user_id")]
+        public virtual string? UserId { get; set; }
+    }
+
+    public partial class Layouts
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("profile")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+        public virtual Collection<PassageProfile>? Profile { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("registration")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+        public virtual Collection<PassageRegistration>? Registration { get; set; }
+    }
+
+    public partial class PassageProfile
+    {
+        [JsonPropertyName("id")]
+        public virtual string Id { get; set; } = string.Empty;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("x")]
+        public virtual long? X { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("y")]
+        public virtual long? Y { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("w")]
+        public virtual long? Width { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("h")]
+        public virtual long? Height { get; set; }
+    }
+
+    public partial class PassageRegistration
+    {
+        [JsonPropertyName("id")]
+        public virtual string Id { get; set; } = string.Empty;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("x")]
+        public virtual long? X { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("y")]
+        public virtual long? Y { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("w")]
+        public virtual long? Width { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("h")]
+        public virtual long? Height { get; set; }
+    }
+
+    public partial class PassageApp
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("app")]
+        public virtual App App { get; set; } = new();
+    }
+
+    public partial class PassageAuthResult
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("auth_result")]
+        public virtual AuthResult? Result { get; set; }
     }
 
     public partial class PassageUser
@@ -177,18 +251,6 @@ namespace PassageIdentity
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("user")]
         public virtual User? User { get; set; }
-    }
-
-    [JsonConverter(typeof(CustomJsonStringEnumConverter))]
-    public enum UserStatus
-    {
-        [EnumMember(Value = "active")]
-        Active,
-        [EnumMember(Value = "inactive")]
-        Inactive,
-        [EnumMember(Value = "pending")]
-        Pending,
-        UserIDDoesNotExist = -1,
     }
 
     public partial class User
