@@ -92,7 +92,8 @@ namespace PassageIdentity
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("user_metadata_schema")]
-        public virtual Dictionary<string, string>? UserMetadataSchema { get; } = new();
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+        public virtual Collection<UserMetadata>? UserMetadataSchema { get; set; } = new();
     }
 
     public partial class AuthResult
@@ -280,7 +281,7 @@ namespace PassageIdentity
         public virtual UserStatus? Status { get; set; }
 
         [JsonPropertyName("user_metadata")]
-        public virtual Dictionary<string, object> UserMetadata { get; } = new();
+        public virtual Collection<UserMetadata> UserMetadata { get; } = new();
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("webauthn")]
@@ -289,5 +290,54 @@ namespace PassageIdentity
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("webauthn_types")]
         public virtual Collection<string> WebauthnTypes { get; } = new();
+    }
+
+    [JsonConverter(typeof(CustomJsonStringEnumConverter))]
+    public enum UserMetadataFieldType
+    {
+        [EnumMember(Value = "date")]
+        Date,
+
+        [EnumMember(Value = "integer")]
+        Number,
+
+        [EnumMember(Value = "string")]
+        Text,
+
+        [EnumMember(Value = "bool")]
+        Switch,
+
+        [EnumMember(Value = "phone")]
+        Phone,
+
+        [EnumMember(Value = "email")]
+        Email
+    }
+
+    public partial class UserMetadata
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("id")]
+        public virtual string? Id { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("field_name")]
+        public virtual string? FieldName { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("type")]
+        public virtual UserMetadataFieldType? Type { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("friendly_name")]
+        public virtual string? FriendlyName { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("registration")]
+        public virtual bool? Registration { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("profile")]
+        public virtual bool? Profile { get; set; }
     }
 }
