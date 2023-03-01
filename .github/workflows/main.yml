@@ -40,7 +40,7 @@ jobs:
       - name: Restore dependancies
         run: dotnet restore
       
-      - name: 🛠️ Building library in release mode
+      - name: 🛠️ Building libraries in release mode
         run: dotnet build --no-restore --configuration Release
 
       # pack and publish the nuget package
@@ -68,6 +68,7 @@ jobs:
         with:
           body: |
             [NuGet Release v${{ steps.nbgv.outputs.SemVer2 }}](https://www.nuget.org/packages/AspNet.Security.Identity.Passage/${{ steps.nbgv.outputs.SemVer2 }})
+            [NuGet Release v${{ steps.nbgv.outputs.SemVer2 }}](https://www.nuget.org/packages/PassageIdentity/${{ steps.nbgv.outputs.SemVer2 }})
           tag_name: ${{ steps.nbgv.outputs.SemVer2 }}
           release_name: Release v${{ steps.nbgv.outputs.SemVer2 }}
           draft: true

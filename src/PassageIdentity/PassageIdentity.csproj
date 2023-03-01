@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>passage-dotnet</PackageId>
+    <PackageId>PassageIdentity</PackageId>
     <Company>Clinical Support Systems</Company>
     <Description>Fully passwordless authentication to reduce friction for your users and provide best-in-class security.</Description>
     <Copyright>2023 Clinical Support Systems</Copyright>
