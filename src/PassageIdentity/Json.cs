@@ -1,20 +1,19 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PassageIdentity
 {
     public class CustomJsonStringEnumConverter : JsonConverterFactory
     {
-        private readonly JsonNamingPolicy? _namingPolicy;
         private readonly bool _allowIntegerValues;
         private readonly JsonStringEnumConverter _baseConverter;
+        private readonly JsonNamingPolicy? _namingPolicy;
 
-        public CustomJsonStringEnumConverter() : this(null, true) { }
+        public CustomJsonStringEnumConverter() : this(null, true)
+        {
+        }
 
         public CustomJsonStringEnumConverter(JsonNamingPolicy? namingPolicy = null, bool allowIntegerValues = true)
         {
@@ -36,7 +35,7 @@ namespace PassageIdentity
                         let attr = field.GetCustomAttribute<EnumMemberAttribute>()
                         where attr != null
                         select (field.Name, attr.Value);
-            var dictionary = query.ToDictionary(p => p.Item1, p => p.Item2);
+            var dictionary = query.ToDictionary(p => p.Name, p => p.Value);
             if (dictionary.Count > 0)
             {
                 return new JsonStringEnumConverter(new DictionaryLookupNamingPolicy(dictionary, _namingPolicy ?? new SnakeCaseNamingPolicy()), _allowIntegerValues).CreateConverter(typeToConvert, options);
@@ -59,15 +58,6 @@ namespace PassageIdentity
         }
     }
 
-    internal class JsonNamingPolicyDecorator : JsonNamingPolicy
-    {
-        private readonly JsonNamingPolicy _underlyingNamingPolicy;
-
-        public JsonNamingPolicyDecorator(JsonNamingPolicy underlyingNamingPolicy) => this._underlyingNamingPolicy = underlyingNamingPolicy;
-
-        public override string ConvertName(string name) => _underlyingNamingPolicy == null ? name : _underlyingNamingPolicy.ConvertName(name);
-    }
-
     internal sealed class DictionaryLookupNamingPolicy : JsonNamingPolicyDecorator
     {
         private readonly Dictionary<string, string> _dictionary;
@@ -75,5 +65,14 @@ namespace PassageIdentity
         public DictionaryLookupNamingPolicy(Dictionary<string, string> dictionary, JsonNamingPolicy underlyingNamingPolicy) : base(underlyingNamingPolicy) => this._dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
 
         public override string ConvertName(string name) => _dictionary.TryGetValue(name, out var value) ? value : base.ConvertName(name);
+    }
+
+    internal class JsonNamingPolicyDecorator : JsonNamingPolicy
+    {
+        private readonly JsonNamingPolicy _underlyingNamingPolicy;
+
+        public JsonNamingPolicyDecorator(JsonNamingPolicy underlyingNamingPolicy) => this._underlyingNamingPolicy = underlyingNamingPolicy;
+
+        public override string ConvertName(string name) => _underlyingNamingPolicy == null ? name : _underlyingNamingPolicy.ConvertName(name);
     }
 }

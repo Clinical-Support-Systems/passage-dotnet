@@ -6,7 +6,7 @@ namespace PassageIdentity
     {
         private readonly ILogger _logger;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IPassageConfig _passageConfig;
+        private readonly IPassageConfig _config;
         private PassageAuthentication? _authentication;
 
         private PassageManagement? _management;
@@ -22,18 +22,18 @@ namespace PassageIdentity
             //httpClientFactory.CreateClient(PassageConsts.NamedClient)
         }
 
-        public PassageClient(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig passageConfig)
+        public PassageClient(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig config)
         {
             _logger = logger;
             _httpClientFactory = httpClientFactory;
-            _passageConfig = passageConfig;
+            _config = config;
         }
 
         public PassageAuthentication Authentication
         {
             get
             {
-                _authentication ??= new(_logger, _httpClientFactory, _passageConfig);
+                _authentication ??= new(_logger, _httpClientFactory, _config);
                 return _authentication;
             }
         }
@@ -42,7 +42,7 @@ namespace PassageIdentity
         {
             get
             {
-                _management ??= new();
+                _management ??= new(_logger, _httpClientFactory, _config);
                 return _management;
             }
         }

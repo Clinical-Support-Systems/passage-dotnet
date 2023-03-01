@@ -67,6 +67,68 @@ namespace PassageIdentity
         public virtual Dictionary<string, string>? UserMetadataSchema { get; } = new();
     }
 
+    public class Device
+    {
+        /// <summary>
+        /// The ID of the webAuthn device used for authentication
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("id")]
+        public virtual string? Id { get; set; }
+
+        /// <summary>
+        /// The CredID for this webAuthn device (encoded to match what is stored in psg_cred_obj)
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("cred_id")]
+        public virtual string? CredId { get; set; }
+
+        /// <summary>
+        /// The UserID for this webAuthn device
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("user_id")]
+        public virtual string? UserId { get; set; }
+
+        /// <summary>
+        /// The friendly name for the webAuthn device used to authenticate
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("friendly_name")]
+        public virtual string? FriendlyName { get; set; }
+
+        /// <summary>
+        /// The Credential Type
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("type")]
+        public virtual string? CredentialType { get; set; }
+
+        /// <summary>
+        /// How many times this webAuthn device has been used to authenticate the user
+        /// </summary>
+        [JsonPropertyName("usage_count")]
+        public virtual long UsageCount { get; set; }
+
+        /// <summary>
+        /// The last time this webAuthn device was updated
+        /// </summary>
+        [JsonPropertyName("updated_at")]
+        public virtual DateTime UpdatedAt { get; set; }
+
+        /// <summary>
+        /// The first time this webAuthn device was used to authenticate the user
+        /// </summary>
+        [JsonPropertyName("created_at")]
+        public virtual DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// The last time this webAuthn device was used to authenticate the user
+        /// </summary>
+        [JsonPropertyName("last_login_at")]
+        public virtual DateTime LastLoginAt { get; set; }
+    }
+
     public partial class Layouts
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
