@@ -10,13 +10,14 @@ namespace AspNet.Security.Identity.Passage
     public class PassageAuthHandler : AuthenticationHandler<PassageAuthenticationOptions>
     {
         private PassageClient _client;
+        private readonly ILogger<PassageAuthHandler> _logger;
 
         public PassageAuthHandler(IOptionsMonitor<PassageAuthenticationOptions> options,
-                                  ILoggerFactory logger,
+                                  ILoggerFactory loggerFactory,
                                   IHttpClientFactory httpClientFactory,
                                   UrlEncoder encoder,
                                   ISystemClock clock)
-            : base(options, logger, encoder, clock)
+            : base(options, loggerFactory, encoder, clock)
         {
             if (options is null)
             {
@@ -26,16 +27,19 @@ namespace AspNet.Security.Identity.Passage
             // Setup the handler to remake the client should the options change
             options.OnChange((opt) =>
             {
-                _client = new PassageClient(logger.CreateLogger<PassageAuthHandler>(),
+                _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthHandler>(),
                                         httpClientFactory,
                                         new PassageConfig(opt.AppId ?? string.Empty) { ApiKey = opt.ApiKey });
             });
 
-            _client = new PassageClient(logger.CreateLogger<PassageAuthHandler>(),
+            _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthHandler>(),
                                         httpClientFactory,
                                         new PassageConfig(options.CurrentValue.AppId ?? string.Empty) { ApiKey = options.CurrentValue.ApiKey });
+            _logger = loggerFactory.CreateLogger<PassageAuthHandler>();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>")]
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             using var cts = new CancellationTokenSource();
@@ -75,9 +79,15 @@ namespace AspNet.Security.Identity.Passage
                 var ticket = new AuthenticationTicket(principal, Scheme.Name);
                 return AuthenticateResult.Success(ticket);
             }
-            catch (Exception)
+            catch (PassageException passEx)
             {
-                throw;
+                _logger.LogDebug(passEx, "Error authenticating with {Handler}", nameof(PassageAuthHandler));
+                return AuthenticateResult.Fail(passEx);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthHandler));
+                return AuthenticateResult.NoResult();
             }
             finally
             {
