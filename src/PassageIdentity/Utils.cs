@@ -12,7 +12,7 @@ public static class StringUtils
 
     public static bool IsValidE164(this string phoneNumber)
     {
-        var regex = new Regex(PassageConsts.e164RegexPattern);
+        var regex = new Regex(PassageConsts.E164RegexPattern);
         return regex.IsMatch(phoneNumber);
     }
 }

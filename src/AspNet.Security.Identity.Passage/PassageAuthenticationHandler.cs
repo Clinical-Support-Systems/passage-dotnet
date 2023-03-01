@@ -7,12 +7,12 @@ using PassageIdentity;
 
 namespace AspNet.Security.Identity.Passage
 {
-    public class PassageAuthHandler : AuthenticationHandler<PassageAuthenticationOptions>
+    public class PassageAuthenticationHandler : AuthenticationHandler<PassageAuthenticationOptions>
     {
         private PassageClient _client;
-        private readonly ILogger<PassageAuthHandler> _logger;
+        private readonly ILogger<PassageAuthenticationHandler> _logger;
 
-        public PassageAuthHandler(IOptionsMonitor<PassageAuthenticationOptions> options,
+        public PassageAuthenticationHandler(IOptionsMonitor<PassageAuthenticationOptions> options,
                                   ILoggerFactory loggerFactory,
                                   IHttpClientFactory httpClientFactory,
                                   UrlEncoder encoder,
@@ -27,15 +27,15 @@ namespace AspNet.Security.Identity.Passage
             // Setup the handler to remake the client should the options change
             options.OnChange((opt) =>
             {
-                _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthHandler>(),
+                _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthenticationHandler>(),
                                         httpClientFactory,
                                         new PassageConfig(opt.AppId ?? string.Empty) { ApiKey = opt.ApiKey });
             });
 
-            _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthHandler>(),
+            _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthenticationHandler>(),
                                         httpClientFactory,
                                         new PassageConfig(options.CurrentValue.AppId ?? string.Empty) { ApiKey = options.CurrentValue.ApiKey });
-            _logger = loggerFactory.CreateLogger<PassageAuthHandler>();
+            _logger = loggerFactory.CreateLogger<PassageAuthenticationHandler>();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
@@ -81,12 +81,12 @@ namespace AspNet.Security.Identity.Passage
             }
             catch (PassageException passEx)
             {
-                _logger.LogDebug(passEx, "Error authenticating with {Handler}", nameof(PassageAuthHandler));
+                _logger.LogDebug(passEx, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
                 return AuthenticateResult.Fail(passEx);
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthHandler));
+                _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
                 return AuthenticateResult.NoResult();
             }
             finally

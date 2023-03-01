@@ -14,7 +14,6 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <EmbedAllSources>true</EmbedAllSources>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>

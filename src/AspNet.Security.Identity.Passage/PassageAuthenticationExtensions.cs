@@ -9,7 +9,7 @@ namespace AspNet.Security.Identity.Passage
     public static class PassageAuthenticationExtensions
     {
         /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
+        /// Adds <see cref="PassageAuthenticationHandler"/> to the specified
         /// <see cref="AuthenticationBuilder"/>, which enables Passage authentication capabilities.
         /// </summary>
         /// <param name="builder">The authentication builder.</param>
@@ -21,11 +21,11 @@ namespace AspNet.Security.Identity.Passage
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddPassage(PassageAuthSchemeConstants.PassageAuthAuthScheme, options => { });
+            return builder.AddPassage(PassageAuthenticationConstants.PassageAuthAuthScheme, options => { });
         }
 
         /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
+        /// Adds <see cref="PassageAuthenticationHandler"/> to the specified
         /// <see cref="AuthenticationBuilder"/>, which enables Passage authentication capabilities.
         /// </summary>
         /// <param name="builder">The authentication builder.</param>
@@ -45,11 +45,11 @@ namespace AspNet.Security.Identity.Passage
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            return builder.AddPassage(PassageAuthSchemeConstants.PassageAuthAuthScheme, configuration);
+            return builder.AddPassage(PassageAuthenticationConstants.PassageAuthAuthScheme, configuration);
         }
 
         /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
+        /// Adds <see cref="PassageAuthenticationHandler"/> to the specified
         /// <see cref="AuthenticationBuilder"/>, which enables Passage authentication capabilities.
         /// </summary>
         /// <param name="builder">The authentication builder.</param>
@@ -76,11 +76,11 @@ namespace AspNet.Security.Identity.Passage
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            return builder.AddPassage(scheme, PassageAuthSchemeConstants.PassageDisplayName, configuration);
+            return builder.AddPassage(scheme, PassageAuthenticationConstants.PassageDisplayName, configuration);
         }
 
         /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
+        /// Adds <see cref="PassageAuthenticationHandler"/> to the specified
         /// <see cref="AuthenticationBuilder"/>, which enables OneId authentication capabilities.
         /// </summary>
         /// <param name="builder">The authentication builder.</param>
@@ -112,7 +112,7 @@ namespace AspNet.Security.Identity.Passage
             builder.Services.AddHttpClient(PassageConsts.NamedClient);
             builder.Services.TryAddSingleton<JwtSecurityTokenHandler>();
 
-            return builder.AddScheme<PassageAuthenticationOptions, PassageAuthHandler>(scheme, caption, configuration);
+            return builder.AddScheme<PassageAuthenticationOptions, PassageAuthenticationHandler>(scheme, caption, configuration);
         }
     }
 }

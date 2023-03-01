@@ -4,7 +4,6 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>aspnet-PassageIdentity.ExampleApp-7ad73fda-3fb2-4290-b491-ff5a25df6716</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

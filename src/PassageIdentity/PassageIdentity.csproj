@@ -25,7 +25,6 @@
     <Authors>Kori Francis</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>passage; passkey;</PackageTags>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/Clinical-Support-Systems/passage-dotnet</RepositoryUrl>
   </PropertyGroup>
 
