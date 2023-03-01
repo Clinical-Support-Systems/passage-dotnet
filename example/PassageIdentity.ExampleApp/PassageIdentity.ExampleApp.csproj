@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PassageIdentity\PassageIdentity.csproj" />
+    <ProjectReference Include="..\..\src\AspNet.Security.Identity.Passage\AspNet.Security.Identity.Passage.csproj" />
   </ItemGroup>
 
 </Project>

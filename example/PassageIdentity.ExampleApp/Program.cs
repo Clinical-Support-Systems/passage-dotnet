@@ -1,3 +1,4 @@
+using AspNet.Security.Identity.Passage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PassageIdentity.ExampleApp.Data;
@@ -18,6 +19,9 @@ namespace PassageIdentity.ExampleApp
 
             builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            builder.Services.AddAuthentication().AddPassage();
+
             builder.Services.AddRazorPages();
 
             var app = builder.Build();
