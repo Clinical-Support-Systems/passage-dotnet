@@ -1,137 +1,88 @@
-using System;
-using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http.Features.Authentication;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PassageIdentity;
 
 namespace AspNet.Security.Identity.Passage
 {
-    public static class PassageAuthenticationExtensions
-    {
-        /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
-        /// <see cref="AuthenticationBuilder"/>, which enables Passage authentication capabilities.
-        /// </summary>
-        /// <param name="builder">The authentication builder.</param>
-        /// <returns>A reference to this instance after the operation has completed.</returns>
-        public static AuthenticationBuilder AddPassage(this AuthenticationBuilder builder)
-        {
-            if (builder is null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            return builder.AddPassage(PassageAuthSchemeConstants.PassageAuthAuthScheme, options => { });
-        }
-
-        /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
-        /// <see cref="AuthenticationBuilder"/>, which enables Passage authentication capabilities.
-        /// </summary>
-        /// <param name="builder">The authentication builder.</param>
-        /// <param name="configuration">The delegate used to configure the Passage options.</param>
-        /// <returns>A reference to this instance after the operation has completed.</returns>
-        public static AuthenticationBuilder AddPassage(
-            this AuthenticationBuilder builder,
-            Action<PassageAuthenticationOptions> configuration)
-        {
-            if (builder is null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configuration is null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
-
-            return builder.AddPassage(PassageAuthSchemeConstants.PassageAuthAuthScheme, configuration);
-        }
-
-        /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
-        /// <see cref="AuthenticationBuilder"/>, which enables Passage authentication capabilities.
-        /// </summary>
-        /// <param name="builder">The authentication builder.</param>
-        /// <param name="scheme">The authentication scheme associated with this instance.</param>
-        /// <param name="configuration">The delegate used to configure the Passage options.</param>
-        /// <returns>The <see cref="AuthenticationBuilder"/>.</returns>
-        public static AuthenticationBuilder AddPassage(
-            this AuthenticationBuilder builder,
-            string scheme,
-            Action<PassageAuthenticationOptions> configuration)
-        {
-            if (builder is null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (string.IsNullOrEmpty(scheme))
-            {
-                throw new ArgumentException($"'{nameof(scheme)}' cannot be null or empty.", nameof(scheme));
-            }
-
-            if (configuration is null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
-
-            return builder.AddPassage(scheme, PassageAuthSchemeConstants.PassageDisplayName, configuration);
-        }
-
-        /// <summary>
-        /// Adds <see cref="PassageAuthHandler"/> to the specified
-        /// <see cref="AuthenticationBuilder"/>, which enables OneId authentication capabilities.
-        /// </summary>
-        /// <param name="builder">The authentication builder.</param>
-        /// <param name="scheme">The authentication scheme associated with this instance.</param>
-        /// <param name="caption">The optional display name associated with this instance.</param>
-        /// <param name="configuration">The delegate used to configure the Passage options.</param>
-        /// <returns>The <see cref="AuthenticationBuilder"/>.</returns>
-        public static AuthenticationBuilder AddPassage(
-            this AuthenticationBuilder builder,
-            string scheme,
-            string caption,
-            Action<PassageAuthenticationOptions> configuration)
-        {
-            if (builder is null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (scheme is null)
-            {
-                throw new ArgumentNullException(nameof(scheme));
-            }
-
-            if (configuration is null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
-
-            builder.Services.AddHttpClient();
-            builder.Services.TryAddSingleton<JwtSecurityTokenHandler>();
-
-            return builder.AddScheme<PassageAuthenticationOptions, PassageAuthHandler>(scheme, caption, configuration);
-        }
-    }
     public class PassageAuthHandler : AuthenticationHandler<PassageAuthenticationOptions>
     {
+        private PassageClient _client;
+
         public PassageAuthHandler(IOptionsMonitor<PassageAuthenticationOptions> options,
                                   ILoggerFactory logger,
+                                  IHttpClientFactory httpClientFactory,
                                   UrlEncoder encoder,
-                                  ISystemClock clock) : base(options, logger, encoder, clock)
+                                  ISystemClock clock)
+            : base(options, logger, encoder, clock)
         {
+            if (options is null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            // Setup the handler to remake the client should the options change
+            options.OnChange((opt) =>
+            {
+                _client = new PassageClient(logger.CreateLogger<PassageAuthHandler>(),
+                                        httpClientFactory,
+                                        new PassageConfig(opt.AppId ?? string.Empty) { ApiKey = opt.ApiKey });
+            });
+
+            _client = new PassageClient(logger.CreateLogger<PassageAuthHandler>(),
+                                        httpClientFactory,
+                                        new PassageConfig(options.CurrentValue.AppId ?? string.Empty) { ApiKey = options.CurrentValue.ApiKey });
         }
 
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            throw new NotImplementedException();
+            using var cts = new CancellationTokenSource();
+            try
+            {
+                var auth = await _client.Authentication.GetToken(ct: cts.Token).ConfigureAwait(false);
+                if (auth == null)
+                {
+                    return AuthenticateResult.Fail("Could not authenticate.");
+                }
+
+                // set access and refresh token
+                _client.Management.Auth = auth.Result;
+
+                var user = await _client.Management.GetUserAsync(ct: cts.Token).ConfigureAwait(false);
+
+                if (user == null)
+                {
+                    return AuthenticateResult.Fail("Could not find user.");
+                }
+
+                var claims = new[]
+                    {
+                    new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                    //new Claim(ClaimTypes.Role, role),
+                    //new Claim(InternalClaimTypes.UserId, authorizationInfo.UserId.ToString("N", CultureInfo.InvariantCulture)),
+                    //new Claim(InternalClaimTypes.DeviceId, authorizationInfo.DeviceId),
+                    //new Claim(InternalClaimTypes.Device, authorizationInfo.Device),
+                    //new Claim(InternalClaimTypes.Client, authorizationInfo.Client),
+                    //new Claim(InternalClaimTypes.Version, authorizationInfo.Version),
+                    //new Claim(InternalClaimTypes.Token, authorizationInfo.Token),
+                    //new Claim(InternalClaimTypes.IsApiKey, authorizationInfo.IsApiKey.ToString(CultureInfo.InvariantCulture))
+                };
+
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
+                return AuthenticateResult.Success(ticket);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                cts.Cancel();
+            }
         }
     }
 }

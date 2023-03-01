@@ -20,7 +20,11 @@ namespace PassageIdentity.ExampleApp
             builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-            builder.Services.AddAuthentication().AddPassage();
+            builder.Services.AddAuthentication().AddPassage(options =>
+            {
+                options.AppId = builder.Configuration.GetValue<string>("Passage:AppId", string.Empty);
+                options.ApiKey = builder.Configuration.GetValue<string>("Passage:ApiKey", string.Empty);
+            });
 
             builder.Services.AddRazorPages();
 

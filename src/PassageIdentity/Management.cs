@@ -10,6 +10,9 @@ namespace PassageIdentity
         private readonly ILogger _logger;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IPassageConfig _config;
+        private AuthResult? _authResult;
+
+        public AuthResult? Auth { get => _authResult; set => _authResult = value; }
 
         public PassageManagement(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig config)
         {
@@ -17,6 +20,8 @@ namespace PassageIdentity
             _httpClientFactory = httpClientFactory;
             _config = config;
         }
+
+
 
         /// <summary>
         /// Create a new application. If not authenticated, the app is created in test
@@ -147,6 +152,7 @@ namespace PassageIdentity
             // GET https://api.passage.id/v1/apps/{app_id}/users/{user_id}/
             // Authorization: Bearer (api_key/auth_token)
             // 200/401/404/500
+            // check token for validity, for expiry, get refresh if required
             throw new NotImplementedException();
         }
 

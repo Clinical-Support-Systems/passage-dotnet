@@ -142,12 +142,34 @@ namespace PassageIdentity
 
     public partial class PassageApp
     {
-        /// <summary>
-        ///
-        /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("app")]
         public virtual App? App { get; set; }
+    }
+
+    public partial class PassageAuthResult
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("auth_result")]
+        public virtual AuthResult? Result { get; set; }
+    }
+
+    public partial class AuthResult
+    {
+        [JsonPropertyName("auth_token")]
+        public virtual string AccessToken { get; set; } = string.Empty;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("redirect_url")]
+        public virtual Uri? RedirectUrl { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("refresh_token")]
+        public virtual string? RefreshToken { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("refresh_token_expiration")]
+        public virtual long? RefreshTokenExpiration { get; set; }   
     }
 
     public partial class PassageUser

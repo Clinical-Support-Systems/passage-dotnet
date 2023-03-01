@@ -133,7 +133,7 @@ namespace PassageIdentity
                 throw new Exception(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase));
             }
 
-            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -142,7 +142,7 @@ namespace PassageIdentity
             return results ?? new();
         }
 
-        public async Task GetToken(string? refreshToken = null, CancellationToken ct = default)
+        public async Task<PassageAuthResult?> GetToken(string? refreshToken = null, CancellationToken ct = default)
         {
             var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/tokens/");
             using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
@@ -155,6 +155,13 @@ namespace PassageIdentity
             using var form = new FormUrlEncodedContent(content);
 
             using var response = await client.PostAsync(uri, form, ct).ConfigureAwait(false);
+            using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var results = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
+            return results ?? new();
         }
     }
 }
