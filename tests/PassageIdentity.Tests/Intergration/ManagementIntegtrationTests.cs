@@ -11,6 +11,5 @@ public class ManagementIntegtrationTests : IntegrationTestBase
     [Fact]
     public void Test1()
     {
-
     }
 }

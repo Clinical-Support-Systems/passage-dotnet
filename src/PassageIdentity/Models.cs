@@ -29,7 +29,7 @@ public enum UserMetadataFieldType
     [EnumMember(Value = "string")]
     Text,
 
-    [EnumMember(Value = "bool")]
+    [EnumMember(Value = "boolean")]
     Switch,
 
     [EnumMember(Value = "phone")]
