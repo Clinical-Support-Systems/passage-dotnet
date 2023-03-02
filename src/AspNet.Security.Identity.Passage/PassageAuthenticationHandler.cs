@@ -144,7 +144,9 @@ namespace AspNet.Security.Identity.Passage
                     return HandleRequestResult.Fail("Could not find user.");
                 }
 
-                var claims = new List<Claim>();
+                var claims = new List<Claim>() {
+                    new Claim(ClaimTypes.NameIdentifier, userId)
+                };
 
                 if (!string.IsNullOrEmpty(user.Email))
                 {
@@ -167,7 +169,7 @@ namespace AspNet.Security.Identity.Passage
                     claims.Add(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
                 }
 
-                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var identity = new ClaimsIdentity(claims, nameof(PassageAuthenticationHandler));
                 var principal = new ClaimsPrincipal(identity);
 
                 //var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);

@@ -10,6 +10,12 @@ namespace PassageIdentity.TagHelpers
         [HtmlAttributeName("app-id")]
         public string? AppId { get; set; }
 
+        /// <summary>
+        /// The ISO-3166-2 country code representing the language to use, when possible
+        /// </summary>
+        [HtmlAttributeName("default-country-code")]
+        public string? DefaultCountryCode { get; set; }
+
         public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (context is null)
@@ -26,6 +32,7 @@ namespace PassageIdentity.TagHelpers
             output.PreElement.SetHtmlContent(script);
 
             if (!string.IsNullOrEmpty(AppId)) output.Attributes.Add(new TagHelperAttribute("app-id", AppId));
+            if (!string.IsNullOrEmpty(DefaultCountryCode)) output.Attributes.Add(new TagHelperAttribute("default-country-code", DefaultCountryCode));
 
             return base.ProcessAsync(context, output);
         }
