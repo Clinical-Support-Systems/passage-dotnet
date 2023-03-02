@@ -324,6 +324,22 @@ public partial class User
     public virtual bool? Webauthn { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("created_at")]
+    public virtual DateTime? CreatedAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("updated_at")]
+    public virtual DateTime? UpdatedAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("last_login_at")]
+    public virtual DateTime? LastLoginAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("login_count")]
+    public virtual long? LoginCount { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("webauthn_types")]
     public virtual Collection<string> WebauthnTypes { get; } = new();
 }

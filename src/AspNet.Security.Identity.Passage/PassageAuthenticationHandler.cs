@@ -38,26 +38,6 @@ namespace AspNet.Security.Identity.Passage
 
             _logger = loggerFactory.CreateLogger<PassageAuthenticationHandler>();
         }
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-        {
-            return base.HandleAuthenticateAsync();
-        }
-
-        public override Task<bool> HandleRequestAsync()
-        {
-            if (Request.Cookies.TryGetValue("psg_auth_token", out var authTokenValue))
-            {
-                // there is a cookie value that might be important
-                //throw new NotImplementedException();
-            }
-
-            return base.HandleRequestAsync();
-        }
-
-        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
-        {
-            return base.HandleChallengeAsync(properties);
-        }
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
@@ -83,6 +63,33 @@ namespace AspNet.Security.Identity.Passage
             return null;
         }
 
+        public override Task<bool> HandleRequestAsync()
+        {
+            if (Request.Cookies.TryGetValue("psg_auth_token", out var authTokenValue))
+            {
+                // there is a cookie value that might be important
+                //throw new NotImplementedException();
+            }
+
+            return base.HandleRequestAsync();
+        }
+
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            return base.HandleAuthenticateAsync();
+        }
+
+        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+        {
+            return base.HandleChallengeAsync(properties);
+        }
+
+        public override Task<bool> ShouldHandleRequestAsync()
+        {
+            var query = Context.Request.Query;
+            return Task.FromResult(query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out _));
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
         protected override async Task<HandleRequestResult> HandleRemoteAuthenticateAsync()
         {
@@ -91,10 +98,24 @@ namespace AspNet.Security.Identity.Passage
             {
                 AuthenticationProperties? properties = null;
                 var query = Request.Query;
+                var protectedRequestToken = Request.Cookies[Options.StateCookie.Name];
+
+                var requestToken = Options.StateDataFormat?.Unprotect(protectedRequestToken);
+
+                properties = requestToken;
+
                 string? userId = null;
                 if (query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out var magicLinkValue))
                 {
                     var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]).ConfigureAwait(false);
+
+                    if (Options.SaveTokens && properties != null)
+                    {
+                        properties.StoreTokens(new[] {
+                            new AuthenticationToken{ Name = "access_token", Value = authResult.AccessToken },
+                            new AuthenticationToken{ Name = "refresh_token", Value = authResult.RefreshToken }
+                        });
+                    }
 
                     // We have a JWT, todo validate
                     _client.Management.Auth = authResult;
@@ -115,6 +136,7 @@ namespace AspNet.Security.Identity.Passage
                 //    }
                 //}
 
+                // Fetch the user using the Management API
                 var user = await _client.Management.GetUserAsync(userId, ct: cts.Token).ConfigureAwait(false);
 
                 if (user == null)
@@ -122,27 +144,37 @@ namespace AspNet.Security.Identity.Passage
                     return HandleRequestResult.Fail("Could not find user.");
                 }
 
-                var claims = new[]
-                    {
-                        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-                        //new Claim(ClaimTypes.Role, role),
-                        //new Claim(InternalClaimTypes.UserId, authorizationInfo.UserId.ToString("N", CultureInfo.InvariantCulture)),
-                        //new Claim(InternalClaimTypes.DeviceId, authorizationInfo.DeviceId),
-                        //new Claim(InternalClaimTypes.Device, authorizationInfo.Device),
-                        //new Claim(InternalClaimTypes.Client, authorizationInfo.Client),
-                        //new Claim(InternalClaimTypes.Version, authorizationInfo.Version),
-                        //new Claim(InternalClaimTypes.Token, authorizationInfo.Token),
-                        //new Claim(InternalClaimTypes.IsApiKey, authorizationInfo.IsApiKey.ToString(CultureInfo.InvariantCulture))
-                    };
+                var claims = new List<Claim>();
+
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    claims.Add(new Claim(ClaimTypes.Email, user.Email));
+                }
+                if (!string.IsNullOrEmpty(user.Phone))
+                {
+                    claims.Add(new Claim(ClaimTypes.HomePhone, user.Phone));
+                }
+                if (user.CreatedAt != null)
+                {
+                    claims.Add(new Claim(InternalClaimTypes.CreatedAt, user.CreatedAt.ToString()));
+                }
+                if (user.UpdatedAt != null)
+                {
+                    claims.Add(new Claim(InternalClaimTypes.UpdatedAt, user.UpdatedAt.ToString()));
+                }
+                if (user.LastLoginAt != null)
+                {
+                    claims.Add(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
+                }
 
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
                 var principal = new ClaimsPrincipal(identity);
 
-                var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
+                //var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
 
-                Context.User = ticketContext.Principal;
+                Context.User = principal;
 
-                var ticket = new AuthenticationTicket(ticketContext.Principal, ticketContext.Properties, Scheme.Name);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
                 //await Options.Events.CreatingTicket(ticketContext);
 
