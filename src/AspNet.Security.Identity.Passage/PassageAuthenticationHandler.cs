@@ -180,6 +180,7 @@ namespace AspNet.Security.Identity.Passage
 
                 // Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
                 await Context.SignInAsync(Scheme.Name, ticket.Principal, ticket.Properties).ConfigureAwait(false);
+
                 //await Options.Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket));
 
 
