@@ -1,7 +1,7 @@
 # passage-dotnet
 .NET SDK for Passage Identity
 
-## Getting Started  {#get-started}
+## Getting Started
 
 1. Create account at [passage.id](https://passage.id/)
 2. Add `appsettings.Development.json` to ++PassageIdentity.Tests++ and ++PassageIdentity.ExampleApp++ that contains:
@@ -16,11 +16,11 @@
 }
 ```
 
-## Contribute {#contribute}
+## Contribute
 
 If you'd like to contribute, I'd love the help.
 
-## Todo {#todo}
+## Todo
 
 - [X] Setup packages
 - [X] Setup CI/CD
@@ -28,7 +28,7 @@ If you'd like to contribute, I'd love the help.
 - [ ] Middleware integration with AspNetCore Identity
 - [ ] Taghelpers include passage elements script automatically
 
-## PS. Send us swag {#swag}
+## PS. Send us swag
 
 ==We love swag==. If you're happy with this project, please send swag to:
 
