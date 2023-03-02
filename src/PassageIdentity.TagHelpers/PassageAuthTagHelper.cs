@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 namespace PassageIdentity.TagHelpers
 {
 
-    [HtmlTargetElement("passage-auth", TagStructure = TagStructure.NormalOrSelfClosing)]
+    [HtmlTargetElement("passage-auth", TagStructure = TagStructure.WithoutEndTag)]
     public class PassageAuthTagHelper : PassageBaseTagHelper
     {
         /// <summary>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace PassageIdentity.TagHelpers
 {
+    [HtmlTargetElement("passage-login", TagStructure = TagStructure.WithoutEndTag)]
     public class PassageLoginTagHelper : TagHelper
     {
         public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
