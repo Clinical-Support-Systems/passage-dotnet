@@ -43,13 +43,17 @@ jobs:
       - name: 🛠️ Building libraries in release mode
         run: dotnet build --no-restore --configuration Release
 
-      # pack and publish the nuget package
+      # pack the AspNet.Security.Identity.Passage package
       - name: Pack AspNet.Security.Identity.Passage nuget
         run: dotnet pack src/AspNet.Security.Identity.Passage/AspNet.Security.Identity.Passage.csproj --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=${{env.NBGV_SemVer1}}
 
-        # pack and publish the nuget package
+      # pack the PassageIdentity package
       - name: Pack PassageIdentity nuget
         run: dotnet pack src/PassageIdentity/PassageIdentity.csproj --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=${{env.NBGV_SemVer1}}
+
+      # pack the PassageIdentity.TagHelpers package
+      - name: Pack PassageIdentity nuget
+        run: dotnet pack src/PassageIdentity.TagHelpers/PassageIdentity.TagHelpers.csproj --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=${{env.NBGV_SemVer1}}
 
       - name: Get NuGet
         uses: nuget/setup-nuget@v1.1.1
