@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using PassageIdentity.ExampleApp.Areas.Identity.Data;
 
 namespace PassageIdentity.ExampleApp.Data;
 
