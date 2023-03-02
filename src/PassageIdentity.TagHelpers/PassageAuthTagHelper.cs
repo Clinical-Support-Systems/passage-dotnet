@@ -57,7 +57,7 @@ namespace PassageIdentity.TagHelpers
             //// Update the output to include the modified head content
             //output.Content.SetHtmlContent(newHeadContent);
 
-            output.PreContent.AppendHtml(script);
+            output.PreElement.SetHtmlContent(script);
             // }
 
             output.TagName = "passage-auth";
