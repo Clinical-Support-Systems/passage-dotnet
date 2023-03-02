@@ -4,5 +4,6 @@ namespace AspNet.Security.Identity.Passage
     {
         public const string PassageAuthAuthScheme = "Passage";
         public const string PassageDisplayName = "Passage";
+        public const string MagicLinkValue = "psg_magic_link";
     }
 }

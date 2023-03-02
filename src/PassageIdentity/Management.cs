@@ -143,16 +143,39 @@ public class PassageManagement
     /// <summary>
     /// Get information about a user.
     /// </summary>
-    /// <param name="appId"></param>
+    /// <param name="userId"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    public Task<User?> GetUserAsync(string? appId = null, CancellationToken ct = default)
+    public async Task<User?> GetUserAsync(string? userId = null, CancellationToken ct = default)
     {
         // GET https://api.passage.id/v1/apps/{app_id}/users/{user_id}/
         // Authorization: Bearer (api_key/auth_token)
         // 200/401/404/500
         // check token for validity, for expiry, get refresh if required
-        throw new NotImplementedException();
+        var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/users/{userId}");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth?.AccessToken ?? _config.ApiKey);
+
+        using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+        }
+
+        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var result = await JsonSerializer.DeserializeAsync<PassageUser>(responseStream, options, ct).ConfigureAwait(false) ?? new();
+        return result.User;
     }
 
     /// <summary>

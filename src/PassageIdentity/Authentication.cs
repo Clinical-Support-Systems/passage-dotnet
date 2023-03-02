@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +12,7 @@ public class PassageAuthentication
     private readonly IPassageConfig _passageConfig;
     private string? _bearerToken = string.Empty;
     private string? _refreshToken = string.Empty;
+
 
     public PassageAuthentication(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig passageConfig)
     {
@@ -56,7 +58,7 @@ public class PassageAuthentication
         using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase));
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
         }
 
         var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -66,6 +68,68 @@ public class PassageAuthentication
         };
         var appBody = await JsonSerializer.DeserializeAsync<PassageApp>(responseStream, options, ct).ConfigureAwait(false);
         return appBody?.App;
+    }
+
+    public static bool IsValidIdentifier(string identifier)
+    {
+        if (identifier.IsValidEmail())
+        {
+            return true;
+        }
+
+        if (identifier.IsValidE164())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// Login with Magic Link
+    /// <para>Send a login email or SMS to the user. The user will receive an email or text with a link to complete their login.</para>
+    /// </summary>
+    /// <param name="identifier"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<MagicLink> GetMagicLinkAsync(string identifier, CancellationToken ct = default)
+    {
+        if (!IsValidIdentifier(identifier))
+        {
+            throw new ArgumentException("Identifier is not a valid email address or E164 formatted phone number.", nameof(identifier));
+        }
+
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/login/magic-link/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+        var payload = new { identifier };
+        var payloadJson = JsonSerializer.Serialize(payload);
+        using var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = uri,
+            Content = new StringContent(payloadJson)
+            {
+                Headers =
+                {
+                    ContentType = new MediaTypeHeaderValue("application/json")
+                }
+            }
+        };
+        using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PassageException($"Failed to get user '{identifier}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+        }
+
+        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var result = await JsonSerializer.DeserializeAsync<PassageMagicLink>(responseStream, options, ct).ConfigureAwait(false);
+        return result?.MagicLink ?? new();
     }
 
     public async Task<PassageAuthResult?> GetToken(string? refreshToken = null, CancellationToken ct = default)
@@ -109,7 +173,7 @@ public class PassageAuthentication
         using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase));
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, $"Failed to get user by identifier '{identifier}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}"), response);
         }
 
         var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -147,7 +211,7 @@ public class PassageAuthentication
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase));
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
         }
 
         using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -162,5 +226,45 @@ public class PassageAuthentication
     public Task<User?> UpdateUserAsync(string identifier, string? email, string? phone, Dictionary<string, object>? userMetadata = null, CancellationToken ct = default)
     {
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Authenticate a magic link for a user. This endpoint checks that the magic link is valid, then returns an authentication token for the user.
+    /// </summary>
+    /// <param name="magicLink"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<AuthResult> CompleteMagicLinkLoginAsync(string? magicLink, CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/magic-link/activate/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+        var payload = new { magic_link = magicLink };
+        var payloadJson = JsonSerializer.Serialize(payload);
+        using var request = new HttpRequestMessage
+        {
+            Method = new HttpMethod("PATCH"),
+            RequestUri = uri,
+            Content = new StringContent(payloadJson)
+            {
+                Headers =
+        {
+            ContentType = new MediaTypeHeaderValue("application/json")
+        }
+            }
+        };
+        using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PassageException($"Failed to authenticate using magic link '{magicLink}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+        }
+
+        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var result = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
+        return result?.Result ?? new();
     }
 }

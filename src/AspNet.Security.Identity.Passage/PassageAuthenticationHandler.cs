@@ -1,13 +1,15 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PassageIdentity;
 
 namespace AspNet.Security.Identity.Passage
 {
-    public class PassageAuthenticationHandler : AuthenticationHandler<PassageAuthenticationOptions>
+    public class PassageAuthenticationHandler : RemoteAuthenticationHandler<PassageAuthenticationOptions>
     {
         private PassageClient _client;
         private readonly ILogger<PassageAuthenticationHandler> _logger;
@@ -16,7 +18,8 @@ namespace AspNet.Security.Identity.Passage
                                   ILoggerFactory loggerFactory,
                                   IHttpClientFactory httpClientFactory,
                                   UrlEncoder encoder,
-                                  ISystemClock clock)
+                                  ISystemClock clock,
+                                  IConfiguration configuration)
             : base(options, loggerFactory, encoder, clock)
         {
             if (options is null)
@@ -24,70 +27,179 @@ namespace AspNet.Security.Identity.Passage
                 throw new ArgumentNullException(nameof(options));
             }
 
-            // Setup the handler to remake the client should the options change
-            options.OnChange((opt) =>
+            if (configuration is null)
             {
-                _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthenticationHandler>(),
-                                        httpClientFactory,
-                                        new PassageConfig(opt.AppId ?? string.Empty) { ApiKey = opt.ApiKey });
-            });
+                throw new ArgumentNullException(nameof(configuration));
+            }
 
             _client = new PassageClient(loggerFactory.CreateLogger<PassageAuthenticationHandler>(),
                                         httpClientFactory,
-                                        new PassageConfig(options.CurrentValue.AppId ?? string.Empty) { ApiKey = options.CurrentValue.ApiKey });
+                                        new PassageConfig(options.CurrentValue.AppId ?? configuration["Passage:AppId"]) { ApiKey = options.CurrentValue.ApiKey ?? configuration["Passage:ApiKey"] });
+
             _logger = loggerFactory.CreateLogger<PassageAuthenticationHandler>();
+        }
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            return base.HandleAuthenticateAsync();
+        }
+        public override Task<bool> HandleRequestAsync()
+        {
+            return base.HandleRequestAsync();
+        }
+
+        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+        {
+            return base.HandleChallengeAsync(properties);
+        }
+
+        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
+        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>")]
+        //protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+        //{
+        //    using var cts = new CancellationTokenSource();
+        //    try
+        //    {
+        //        var auth = await _client.Authentication.GetToken(ct: cts.Token).ConfigureAwait(false);
+        //        if (auth == null)
+        //        {
+        //            return AuthenticateResult.Fail("Could not authenticate.");
+        //        }
+
+        //        // set access and refresh token
+        //        _client.Management.Auth = auth.Result;
+
+        //        var user = await _client.Management.GetUserAsync(ct: cts.Token).ConfigureAwait(false);
+
+        //        if (user == null)
+        //        {
+        //            return AuthenticateResult.Fail("Could not find user.");
+        //        }
+
+        //        var claims = new[]
+        //            {
+        //            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+        //            //new Claim(ClaimTypes.Role, role),
+        //            //new Claim(InternalClaimTypes.UserId, authorizationInfo.UserId.ToString("N", CultureInfo.InvariantCulture)),
+        //            //new Claim(InternalClaimTypes.DeviceId, authorizationInfo.DeviceId),
+        //            //new Claim(InternalClaimTypes.Device, authorizationInfo.Device),
+        //            //new Claim(InternalClaimTypes.Client, authorizationInfo.Client),
+        //            //new Claim(InternalClaimTypes.Version, authorizationInfo.Version),
+        //            //new Claim(InternalClaimTypes.Token, authorizationInfo.Token),
+        //            //new Claim(InternalClaimTypes.IsApiKey, authorizationInfo.IsApiKey.ToString(CultureInfo.InvariantCulture))
+        //        };
+
+        //        var identity = new ClaimsIdentity(claims, Scheme.Name);
+        //        var principal = new ClaimsPrincipal(identity);
+        //        var ticket = new AuthenticationTicket(principal, Scheme.Name);
+        //        return AuthenticateResult.Success(ticket);
+        //    }
+        //    catch (PassageException passEx)
+        //    {
+        //        _logger.LogDebug(passEx, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
+        //        return AuthenticateResult.Fail(passEx);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
+        //        return AuthenticateResult.NoResult();
+        //    }
+        //    finally
+        //    {
+        //        cts.Cancel();
+        //    }
+        //}
+
+        /// <summary>
+        /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
+        /// If it is not provided a default instance is supplied which does nothing when the methods are called.
+        /// </summary>
+        protected new PassageAuthenticationEvents Events
+        {
+            get => (PassageAuthenticationEvents)base.Events;
+            set => base.Events = value;
+        }
+
+        public static string? GetSubFromJwt(string? jwtToken)
+        {
+            var jwtHandler = new JwtSecurityTokenHandler();
+            var token = jwtHandler.ReadJwtToken(jwtToken);
+
+            var subClaim = token.Claims.FirstOrDefault(claim => claim.Type == "sub");
+            if (subClaim != null)
+            {
+                return subClaim.Value;
+            }
+
+            return null;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>")]
-        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+        protected override async Task<HandleRequestResult> HandleRemoteAuthenticateAsync()
         {
             using var cts = new CancellationTokenSource();
             try
             {
-                var auth = await _client.Authentication.GetToken(ct: cts.Token).ConfigureAwait(false);
-                if (auth == null)
+                AuthenticationProperties? properties = null;
+                var query = Request.Query;
+                string? userId = null;
+                if (query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out var magicLinkValue))
                 {
-                    return AuthenticateResult.Fail("Could not authenticate.");
+                    var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]).ConfigureAwait(false);
+
+                    // We have a JWT, todo validate
+                    _client.Management.Auth = authResult;
+
+                    userId = GetSubFromJwt(authResult.AccessToken);
+                }
+                else
+                {
+                    // not magic link?
                 }
 
-                // set access and refresh token
-                _client.Management.Auth = auth.Result;
+                //if (query.TryGetValue("state", out var state))
+                //{
+                //    properties = Options.StateDataFormat?.Unprotect(state);
+                //    if (properties == null)
+                //    {
+                //        return HandleRequestResult.Fail("The state was missing or invalid.");
+                //    }
+                //}
 
-                var user = await _client.Management.GetUserAsync(ct: cts.Token).ConfigureAwait(false);
+                var user = await _client.Management.GetUserAsync(userId, ct: cts.Token).ConfigureAwait(false);
 
                 if (user == null)
                 {
-                    return AuthenticateResult.Fail("Could not find user.");
+                    return HandleRequestResult.Fail("Could not find user.");
                 }
 
                 var claims = new[]
                     {
-                    new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-                    //new Claim(ClaimTypes.Role, role),
-                    //new Claim(InternalClaimTypes.UserId, authorizationInfo.UserId.ToString("N", CultureInfo.InvariantCulture)),
-                    //new Claim(InternalClaimTypes.DeviceId, authorizationInfo.DeviceId),
-                    //new Claim(InternalClaimTypes.Device, authorizationInfo.Device),
-                    //new Claim(InternalClaimTypes.Client, authorizationInfo.Client),
-                    //new Claim(InternalClaimTypes.Version, authorizationInfo.Version),
-                    //new Claim(InternalClaimTypes.Token, authorizationInfo.Token),
-                    //new Claim(InternalClaimTypes.IsApiKey, authorizationInfo.IsApiKey.ToString(CultureInfo.InvariantCulture))
-                };
+                        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                        //new Claim(ClaimTypes.Role, role),
+                        //new Claim(InternalClaimTypes.UserId, authorizationInfo.UserId.ToString("N", CultureInfo.InvariantCulture)),
+                        //new Claim(InternalClaimTypes.DeviceId, authorizationInfo.DeviceId),
+                        //new Claim(InternalClaimTypes.Device, authorizationInfo.Device),
+                        //new Claim(InternalClaimTypes.Client, authorizationInfo.Client),
+                        //new Claim(InternalClaimTypes.Version, authorizationInfo.Version),
+                        //new Claim(InternalClaimTypes.Token, authorizationInfo.Token),
+                        //new Claim(InternalClaimTypes.IsApiKey, authorizationInfo.IsApiKey.ToString(CultureInfo.InvariantCulture))
+                    };
 
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
                 var principal = new ClaimsPrincipal(identity);
-                var ticket = new AuthenticationTicket(principal, Scheme.Name);
-                return AuthenticateResult.Success(ticket);
+
+                var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
+
+                var ticket = new AuthenticationTicket(ticketContext.Principal, ticketContext.Properties, Scheme.Name);
+
+                //await Options.Events.CreatingTicket(ticketContext);
+
+                return HandleRequestResult.Success(ticket);
             }
-            catch (PassageException passEx)
-            {
-                _logger.LogDebug(passEx, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
-                return AuthenticateResult.Fail(passEx);
-            }
-            catch (Exception ex)
+            catch (PassageException ex)
             {
                 _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
-                return AuthenticateResult.NoResult();
+                return HandleRequestResult.Fail(ex.Message);
             }
             finally
             {

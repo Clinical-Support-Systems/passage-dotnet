@@ -4,6 +4,20 @@ using System.Text.Json.Serialization;
 
 namespace PassageIdentity;
 
+public partial class PassageMagicLink
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("magic_link")]
+    public virtual MagicLink? MagicLink { get; set; }
+}
+
+public partial class MagicLink
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("id")]
+    public virtual string? Id { get; set; }
+}
+
 [JsonConverter(typeof(CustomJsonStringEnumConverter))]
 public enum AllowedIdentifier
 {

@@ -10,6 +10,9 @@ namespace PassageIdentity.ExampleApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
+             .AddJsonFile("appsettings.Development.json", true, true)
+             .AddEnvironmentVariables();
 
             // Add services to the container.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
