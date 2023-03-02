@@ -6,11 +6,6 @@ namespace PassageIdentity.TagHelpers
     {
         public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             if (output is null)
             {
                 throw new ArgumentNullException(nameof(output));
@@ -18,7 +13,7 @@ namespace PassageIdentity.TagHelpers
 
             output.TagName = "passage-login";
 
-            return Task.CompletedTask;
+            return base.ProcessAsync(context, output);
         }
     }
 }

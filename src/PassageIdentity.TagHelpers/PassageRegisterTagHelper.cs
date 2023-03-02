@@ -2,15 +2,10 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace PassageIdentity.TagHelpers
 {
-    public class PassageRegisterTagHelper : TagHelper
+    public class PassageRegisterTagHelper : PassageBaseTagHelper
     {
         public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             if (output is null)
             {
                 throw new ArgumentNullException(nameof(output));
@@ -18,7 +13,7 @@ namespace PassageIdentity.TagHelpers
 
             output.TagName = "passage-auth";
 
-            return Task.CompletedTask;
+            return base.ProcessAsync(context, output);
         }
     }
 }
