@@ -52,7 +52,7 @@ jobs:
         run: dotnet pack src/PassageIdentity/PassageIdentity.csproj --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=${{env.NBGV_SemVer1}}
 
       # pack the PassageIdentity.TagHelpers package
-      - name: Pack PassageIdentity nuget
+      - name: Pack PassageIdentity.TagHelpers nuget
         run: dotnet pack src/PassageIdentity.TagHelpers/PassageIdentity.TagHelpers.csproj --configuration Release --no-build --output nupkgs -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=${{env.NBGV_SemVer1}}
 
       - name: Get NuGet
