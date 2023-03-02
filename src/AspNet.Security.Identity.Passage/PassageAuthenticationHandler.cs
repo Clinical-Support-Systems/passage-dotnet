@@ -63,32 +63,32 @@ namespace AspNet.Security.Identity.Passage
             return null;
         }
 
-        public override Task<bool> HandleRequestAsync()
-        {
-            if (Request.Cookies.TryGetValue("psg_auth_token", out var authTokenValue))
-            {
-                // there is a cookie value that might be important
-                //throw new NotImplementedException();
-            }
+        //public override Task<bool> HandleRequestAsync()
+        //{
+        //    if (Request.Cookies.TryGetValue("psg_auth_token", out var authTokenValue))
+        //    {
+        //        // there is a cookie value that might be important
+        //        //throw new NotImplementedException();
+        //    }
 
-            return base.HandleRequestAsync();
-        }
+        //    return base.HandleRequestAsync();
+        //}
 
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-        {
-            return base.HandleAuthenticateAsync();
-        }
+        //protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        //{
+        //    return base.HandleAuthenticateAsync();
+        //}
 
-        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
-        {
-            return base.HandleChallengeAsync(properties);
-        }
+        //protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+        //{
+        //    return base.HandleChallengeAsync(properties);
+        //}
 
-        public override Task<bool> ShouldHandleRequestAsync()
-        {
-            var query = Context.Request.Query;
-            return Task.FromResult(query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out _));
-        }
+        //public override Task<bool> ShouldHandleRequestAsync()
+        //{
+        //    //var query = Context.Request.Query;
+        //    //return Task.FromResult(query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out _));
+        //}
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
         protected override async Task<HandleRequestResult> HandleRemoteAuthenticateAsync()
@@ -169,14 +169,19 @@ namespace AspNet.Security.Identity.Passage
                     claims.Add(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
                 }
 
-                var identity = new ClaimsIdentity(claims, nameof(PassageAuthenticationHandler));
-                var principal = new ClaimsPrincipal(identity);
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
 
                 //var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
 
-                Context.User = principal;
+                var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);
 
-                var ticket = new AuthenticationTicket(principal, Scheme.Name);
+                // Raise TicketReceived event to give subscribers a chance to modify the ticket
+                await Options.Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
+
+                // Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
+                await Context.SignInAsync(Scheme.Name, ticket.Principal, ticket.Properties).ConfigureAwait(false);
+                //await Options.Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket));
+
 
                 //await Options.Events.CreatingTicket(ticketContext);
 

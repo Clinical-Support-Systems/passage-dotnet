@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace PassageIdentity.ExampleApp.Pages
 {
-    [Authorize]
     public class PrivacyModel : PageModel
     {
         [BindProperty(SupportsGet = true)]

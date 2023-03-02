@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 
 namespace AspNet.Security.Identity.Passage
 {
@@ -30,5 +30,9 @@ namespace AspNet.Security.Identity.Passage
         /// </summary>
         /// <param name="context">Contains redirect URI and <see cref="AuthenticationProperties"/> of the challenge </param>
         public virtual Task RedirectToAuthorizationEndpoint(RedirectContext<PassageAuthenticationOptions> context) => OnRedirectToAuthorizationEndpoint(context);
+
+        public virtual Task TicketAccepted(TicketAcceptedContext context) => OnTicketAccepted(context);
+
+        public Func<TicketAcceptedContext, Task> OnTicketAccepted { get; set; } = context => Task.CompletedTask;
     }
 }
