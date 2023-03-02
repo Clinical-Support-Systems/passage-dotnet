@@ -98,12 +98,42 @@ public class PassageManagement
         throw new NotImplementedException();
     }
 
-    public Task<App?> GetAppAsync(CancellationToken ct = default)
+    public async Task<App?> GetAppAsync(CancellationToken ct = default)
     {
-        // GET https://api.passage.id/v1/apps/{app_id}/
-        // Authorization: Bearer (api_key/auth_token)
-        // 200/400/401/404/500
-        throw new NotImplementedException();
+        try
+        {
+            // GET https://api.passage.id/v1/apps/{app_id}/
+            // Authorization: Bearer (api_key)
+            // 200/400/401/404/500
+            var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/");
+            using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+            using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var result = await JsonSerializer.DeserializeAsync<PassageApp>(responseStream, options, ct).ConfigureAwait(false) ?? new();
+            return result.App;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     /// <summary>
