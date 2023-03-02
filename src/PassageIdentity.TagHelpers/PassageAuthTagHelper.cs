@@ -20,13 +20,22 @@ namespace PassageIdentity.TagHelpers
         [HtmlAttributeNotBound]
         public ViewContext ViewContext { get; set; } = null!;
 
-        public bool Test { get; set; } = false;
-
+        public bool Test { get; set; }
         private const string PassageScriptKey = "Passage";
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            //await base.ProcessAsync(context, output);
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (output is null)
+            {
+                throw new ArgumentNullException(nameof(output));
+            }
+
+            await base.ProcessAsync(context, output).ConfigureAwait(false);
 
             var isInitialized = ViewContext.HttpContext.Items.ContainsKey(PassageScriptKey);
             ViewContext.HttpContext.Items[PassageScriptKey] = true;
