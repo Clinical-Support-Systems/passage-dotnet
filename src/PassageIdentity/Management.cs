@@ -152,10 +152,10 @@ public class PassageManagement
         // Authorization: Bearer (api_key/auth_token)
         // 200/401/404/500
         // check token for validity, for expiry, get refresh if required
-        var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/users/{userId}");
+        var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/users/{userId}/");
         using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth?.AccessToken ?? _config.ApiKey);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
 
         using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
 

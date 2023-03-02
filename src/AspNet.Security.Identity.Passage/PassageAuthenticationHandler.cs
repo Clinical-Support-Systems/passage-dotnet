@@ -11,7 +11,7 @@ namespace AspNet.Security.Identity.Passage
 {
     public class PassageAuthenticationHandler : RemoteAuthenticationHandler<PassageAuthenticationOptions>
     {
-        private PassageClient _client;
+        private readonly PassageClient _client;
         private readonly ILogger<PassageAuthenticationHandler> _logger;
 
         public PassageAuthenticationHandler(IOptionsMonitor<PassageAuthenticationOptions> options,
@@ -42,8 +42,15 @@ namespace AspNet.Security.Identity.Passage
         {
             return base.HandleAuthenticateAsync();
         }
+
         public override Task<bool> HandleRequestAsync()
         {
+            if (Request.Cookies.TryGetValue("psg_auth_token", out var authTokenValue))
+            {
+                // there is a cookie value that might be important
+                //throw new NotImplementedException();
+            }
+
             return base.HandleRequestAsync();
         }
 
@@ -51,63 +58,6 @@ namespace AspNet.Security.Identity.Passage
         {
             return base.HandleChallengeAsync(properties);
         }
-
-        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
-        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>")]
-        //protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
-        //{
-        //    using var cts = new CancellationTokenSource();
-        //    try
-        //    {
-        //        var auth = await _client.Authentication.GetToken(ct: cts.Token).ConfigureAwait(false);
-        //        if (auth == null)
-        //        {
-        //            return AuthenticateResult.Fail("Could not authenticate.");
-        //        }
-
-        //        // set access and refresh token
-        //        _client.Management.Auth = auth.Result;
-
-        //        var user = await _client.Management.GetUserAsync(ct: cts.Token).ConfigureAwait(false);
-
-        //        if (user == null)
-        //        {
-        //            return AuthenticateResult.Fail("Could not find user.");
-        //        }
-
-        //        var claims = new[]
-        //            {
-        //            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-        //            //new Claim(ClaimTypes.Role, role),
-        //            //new Claim(InternalClaimTypes.UserId, authorizationInfo.UserId.ToString("N", CultureInfo.InvariantCulture)),
-        //            //new Claim(InternalClaimTypes.DeviceId, authorizationInfo.DeviceId),
-        //            //new Claim(InternalClaimTypes.Device, authorizationInfo.Device),
-        //            //new Claim(InternalClaimTypes.Client, authorizationInfo.Client),
-        //            //new Claim(InternalClaimTypes.Version, authorizationInfo.Version),
-        //            //new Claim(InternalClaimTypes.Token, authorizationInfo.Token),
-        //            //new Claim(InternalClaimTypes.IsApiKey, authorizationInfo.IsApiKey.ToString(CultureInfo.InvariantCulture))
-        //        };
-
-        //        var identity = new ClaimsIdentity(claims, Scheme.Name);
-        //        var principal = new ClaimsPrincipal(identity);
-        //        var ticket = new AuthenticationTicket(principal, Scheme.Name);
-        //        return AuthenticateResult.Success(ticket);
-        //    }
-        //    catch (PassageException passEx)
-        //    {
-        //        _logger.LogDebug(passEx, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
-        //        return AuthenticateResult.Fail(passEx);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
-        //        return AuthenticateResult.NoResult();
-        //    }
-        //    finally
-        //    {
-        //        cts.Cancel();
-        //    }
-        //}
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
@@ -190,6 +140,8 @@ namespace AspNet.Security.Identity.Passage
 
                 var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
 
+                Context.User = ticketContext.Principal;
+
                 var ticket = new AuthenticationTicket(ticketContext.Principal, ticketContext.Properties, Scheme.Name);
 
                 //await Options.Events.CreatingTicket(ticketContext);
@@ -199,7 +151,7 @@ namespace AspNet.Security.Identity.Passage
             catch (PassageException ex)
             {
                 _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
-                return HandleRequestResult.Fail(ex.Message);
+                return HandleRequestResult.Fail(ex);
             }
             finally
             {
