@@ -47,6 +47,28 @@ public class ManagementIntegtrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task Can_Get_ApiKeys()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        // Act
+        var keys = await client.Management.GetApiKeysAsync().ConfigureAwait(false);
+
+        // Assert
+        keys.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x!.Any().ShouldNotBe(false),
+            x => x.All(k => !string.IsNullOrEmpty(k.Id)).ShouldBeTrue(),
+            x => x.All(k => !string.IsNullOrEmpty(k.Name)).ShouldBeTrue(),
+            x => x.All(k => !string.IsNullOrEmpty(k.Role)).ShouldBeTrue(),
+            x => x.All(k => !string.IsNullOrEmpty(k.KeyPrefix)).ShouldBeTrue(),
+            x => x.All(k => k.CreatedAt > DateTime.MinValue).ShouldBeTrue()
+        );
+    }
+
+    [Fact]
     public async Task Can_Get_Users()
     {
         // Arrange
@@ -59,18 +81,17 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         // Assert
         app.ShouldSatisfyAllConditions(
             x => x.ShouldNotBeNull(),
-            x => x!.Any().ShouldNotBe(false)
+            x => x!.Any().ShouldBeTrue()
         );
     }
 
-    [Fact]
-    public async Task Can_Get_User()
+    [Theory]
+    [InlineData("KjhfIloBeaflZGd5ipm6oMge")]
+    public async Task Can_Get_User(string identifier)
     {
         // Arrange
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
-
-        var identifier = "KjhfIloBeaflZGd5ipm6oMge";
 
         // Act
         var app = await client.Management.GetUserAsync(identifier).ConfigureAwait(false);
@@ -100,14 +121,15 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         );
     }
 
-    [Fact]
-    public async Task Can_Create_User()
+    [Theory]
+    [InlineData("test1@test.com")]
+    public async Task Can_Create_User(string emailAddress)
     {
         // Arrange
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
-        var testUser = new User() { Email = "test@testy.com" };
+        var testUser = new User() { Email = emailAddress };
 
         // Act
         var app = await client.Management.CreateUserAsync(testUser).ConfigureAwait(false);
