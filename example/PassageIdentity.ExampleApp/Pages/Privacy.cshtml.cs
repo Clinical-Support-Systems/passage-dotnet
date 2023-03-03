@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace PassageIdentity.ExampleApp.Pages
 {
-    public class PrivacyModel : PageModel
+    public class PrivacyModel : PageModel 
     {
         [BindProperty(SupportsGet = true)]
         public string? IdToken { get; set; }
