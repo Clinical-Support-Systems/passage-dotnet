@@ -39,6 +39,8 @@ namespace AspNet.Security.Identity.Passage
             _logger = loggerFactory.CreateLogger<PassageAuthenticationHandler>();
         }
 
+        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new PassageAuthenticationEvents());
+
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
         /// If it is not provided a default instance is supplied which does nothing when the methods are called.
@@ -176,15 +178,12 @@ namespace AspNet.Security.Identity.Passage
                 var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);
 
                 // Raise TicketReceived event to give subscribers a chance to modify the ticket
-                await Options.Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
+                await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
 
                 // Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
                 await Context.SignInAsync(Scheme.Name, ticket.Principal, ticket.Properties).ConfigureAwait(false);
 
-                //await Options.Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket));
-
-
-                //await Options.Events.CreatingTicket(ticketContext);
+                await Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
 
                 return HandleRequestResult.Success(ticket);
             }

@@ -49,8 +49,9 @@ namespace PassageIdentity.ExampleApp.Pages
             }
         }
 
-        public async Task OnPostSubmit(CancellationToken ct = default)
+        public Task OnPostSubmit(CancellationToken ct = default)
         {
+            return Task.CompletedTask;
         }
     }
 }

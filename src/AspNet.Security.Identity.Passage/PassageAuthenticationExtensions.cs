@@ -21,7 +21,7 @@ namespace AspNet.Security.Identity.Passage
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return builder.AddPassage(PassageAuthenticationConstants.PassageAuthAuthScheme, options => { });
+            return builder.AddPassage(PassageAuthenticationConstants.AuthenticationScheme, options => { });
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace AspNet.Security.Identity.Passage
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            return builder.AddPassage(PassageAuthenticationConstants.PassageAuthAuthScheme, configuration);
+            return builder.AddPassage(PassageAuthenticationConstants.AuthenticationScheme, configuration);
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace AspNet.Security.Identity.Passage
             builder.Services.AddHttpClient(PassageConsts.NamedClient);
             builder.Services.TryAddSingleton<JwtSecurityTokenHandler>();
 
-            return builder.AddScheme<PassageAuthenticationOptions, PassageAuthenticationHandler>(scheme, caption, configuration);
+            return builder.AddRemoteScheme<PassageAuthenticationOptions, PassageAuthenticationHandler>(scheme, caption, configuration);
         }
     }
 }

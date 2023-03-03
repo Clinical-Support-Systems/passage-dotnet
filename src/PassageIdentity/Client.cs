@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 
+[assembly: CLSCompliant(true)]
 namespace PassageIdentity;
 
 public class PassageClient

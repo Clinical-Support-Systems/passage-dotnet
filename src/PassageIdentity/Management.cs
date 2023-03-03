@@ -10,7 +10,6 @@ public class PassageManagement
     private readonly IPassageConfig _config;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger _logger;
-    private AuthResult? _authResult;
 
     public PassageManagement(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig config)
     {
@@ -19,7 +18,7 @@ public class PassageManagement
         _config = config;
     }
 
-    public AuthResult? Auth { get => _authResult; set => _authResult = value; }
+    public AuthResult? Auth { get; set; }
 
     /// <summary>
     /// Assign an app that is currently in test mode to the current authorized user.
@@ -144,7 +143,7 @@ public class PassageManagement
     /// <exception cref="PassageException"></exception>
     public async Task<IEnumerable<App?>> GetAppsAsync(CancellationToken ct = default)
     {
-        var uri = new Uri($"https://api.passage.id/v1/apps/");
+        var uri = new Uri("https://api.passage.id/v1/apps/");
         using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);

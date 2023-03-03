@@ -1,5 +1,7 @@
 # passage-dotnet
-.NET SDK for Passage Identity
+
+## About
+This repo contains a .NET SDK for Passage Identity, TagHelpers and AspNetCore Authentication Middleware to make using Passage PassKeys as easy as possible for the .NET community.
 
 ## Getting Started
 
@@ -27,6 +29,10 @@ If you'd like to contribute, I'd love the help.
 - [X] Setup example
 - [ ] Middleware integration with AspNetCore Identity
 - [ ] Taghelpers include passage elements script automatically
+
+## Additional Documentation
+
+- https://docs.passage.id/
 
 ## PS. Send us swag
 

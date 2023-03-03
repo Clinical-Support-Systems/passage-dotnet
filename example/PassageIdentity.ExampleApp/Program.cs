@@ -1,4 +1,5 @@
 using AspNet.Security.Identity.Passage;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PassageIdentity.ExampleApp.Data;
@@ -23,7 +24,23 @@ namespace PassageIdentity.ExampleApp
             builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-            builder.Services.AddAuthentication().AddPassage(options =>
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = PassageAuthenticationConstants.AuthenticationScheme;
+            })
+            .AddCookie(options =>
+            {
+                options.SlidingExpiration = true;
+                options.LoginPath = "/signin";
+                options.LogoutPath = "/signout";
+                options.AccessDeniedPath = "/accessdenied";
+                options.Events = new CookieAuthenticationEvents
+                {
+                    // add any required event handlers
+                };
+            }).AddPassage(options =>
             {
                 options.AppId = builder.Configuration.GetValue<string>("Passage:AppId", string.Empty);
                 options.ApiKey = builder.Configuration.GetValue<string>("Passage:ApiKey", string.Empty);
