@@ -30,22 +30,8 @@ namespace PassageIdentity.ExampleApp.Pages
             if (User.Identity.IsAuthenticated!)
             {
                 IdToken = await HttpContext.GetTokenAsync("id_token");
-                if (string.IsNullOrEmpty(IdToken) && HttpContext.Session.Keys.Contains("id_token"))
-                {
-                    IdToken = HttpContext.Session.GetString("id_token");
-                }
-
                 AccessToken = await HttpContext.GetTokenAsync("access_token");
-                if (string.IsNullOrEmpty(AccessToken) && HttpContext.Session.Keys.Contains("access_token"))
-                {
-                    AccessToken = HttpContext.Session.GetString("access_token");
-                }
-
                 RefreshToken = await HttpContext.GetTokenAsync("refresh_token");
-                if (string.IsNullOrEmpty(RefreshToken) && HttpContext.Session.Keys.Contains("refresh_token"))
-                {
-                    RefreshToken = HttpContext.Session.GetString("refresh_token");
-                }
             }
         }
 
