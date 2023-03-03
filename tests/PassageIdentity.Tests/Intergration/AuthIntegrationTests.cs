@@ -62,4 +62,18 @@ public class AuthIntegrationTests : IntegrationTestBase
             x => x?.Id.ShouldNotBeNullOrEmpty()
         );
     }
+
+    [Fact]
+    public async Task WebAuth_Start()
+    {
+        var logger = Substitute.For<ILogger>();
+        //PassageConfig.AppId = "passage";
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var magicLink = await client.Authentication.WebAuthLoginStart();
+
+        magicLink.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull()
+        );
+    }
 }

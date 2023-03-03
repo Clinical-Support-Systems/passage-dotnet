@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -264,5 +265,71 @@ public class PassageAuthentication
         };
         var result = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
         return result?.Result ?? new();
+    }
+
+    /// <summary>
+    /// Initiate a WebAuthn login for a user. This endpoint creates a WebAuthn credential assertion challenge that is used to perform the login ceremony from the browser.
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<PassageWebAuthLogin> WebAuthLoginStart(CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/login/webauthn/start/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        var payload = new { refresh_token = _refreshToken ?? string.Empty };
+        var jsonContent = JsonSerializer.Serialize(payload);
+        using (StringContent stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json"))
+        {
+
+            using var response = await client.PostAsync(uri, stringContent, ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException($"Failed to start WebAuth for App '{_passageConfig.AppId}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var result = await JsonSerializer.DeserializeAsync<PassageWebAuthLogin>(responseStream, options, ct).ConfigureAwait(false);
+            return result ?? new();
+        }
+    }
+
+
+
+    /// <summary>
+    /// Initiate a WebAuthn login for a user. This endpoint creates a WebAuthn credential assertion challenge that is used to perform the login ceremony from the browser.
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task WebAuthLoginFinish(CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/login/webauthn/finish/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        var payload = new { refresh_token = _refreshToken ?? string.Empty };
+        var jsonContent = JsonSerializer.Serialize(payload);
+        using (StringContent stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json"))
+        {
+
+            using var response = await client.PostAsync(uri, stringContent, ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException($"Failed to finish WebAuth for App '{_passageConfig.AppId}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var result = await JsonSerializer.DeserializeAsync<PassageWebAuthLogin>(responseStream, options, ct).ConfigureAwait(false);
+            //return result ?? new();
+        }
     }
 }

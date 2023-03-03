@@ -370,3 +370,59 @@ public partial class UserMetadata
     [JsonPropertyName("type")]
     public virtual UserMetadataFieldType? Type { get; set; }
 }
+
+public class PassageUserList
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("users")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<User> Users { get; set; } = new();
+}
+
+public class PassageWebAuthLogin
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("handshake")]
+    public virtual HandShake? HandShake { get; set; }
+}
+
+public class HandShake
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("challenge")]
+    public virtual HandShakeChallenge? Challenge { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user")]
+    public virtual User? User { get; set; }
+}
+
+public class HandShakeChallenge
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("publicKey")]
+    public virtual PublicKey? PublicKey { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("id")]
+    public virtual string? Id { get; set; }
+}
+
+public class PublicKey
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("challenge")]
+    public virtual string? Challenge { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("rpId")]
+    public virtual string? RpId { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("timeout")]
+    public virtual int? TimeOut { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("userVerification")]
+    public virtual string? UserVerification { get; set; }
+}

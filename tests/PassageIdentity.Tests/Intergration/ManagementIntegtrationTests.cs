@@ -70,7 +70,7 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
-        var identifier = "victoria@clinicalsupportsystems.com";
+        var identifier = "KjhfIloBeaflZGd5ipm6oMge";
 
         // Act
         var app = await client.Management.GetUserAsync(identifier).ConfigureAwait(false);
@@ -93,6 +93,55 @@ public class ManagementIntegtrationTests : IntegrationTestBase
 
         // Act
         var app = await client.Management.CreateAppAsync(testApp).ConfigureAwait(false);
+
+        // Assert
+        app.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull()
+        );
+    }
+
+    [Fact]
+    public async Task Can_Create_User()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var testUser = new User() { Email = "test@testy.com" };
+
+        // Act
+        var app = await client.Management.CreateUserAsync(testUser).ConfigureAwait(false);
+
+        // Assert
+        app.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull()
+        );
+    }
+
+
+    [Fact]
+    public async Task Can_Import_Users()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        byte[] bytes = null;
+        using (var ms = new MemoryStream())
+        {
+            using (TextWriter tw = new StreamWriter(ms))
+            {
+                tw.WriteLine("test1@test.com");
+                tw.WriteLine("test2@test.com");
+                tw.Flush();
+                ms.Position = 0;
+                bytes = ms.ToArray();
+            }
+
+        }
+
+        // Act
+        var app = await client.Management.CreateUsersAsync(bytes).ConfigureAwait(false);
 
         // Assert
         app.ShouldSatisfyAllConditions(
