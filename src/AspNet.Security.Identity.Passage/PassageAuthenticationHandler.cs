@@ -104,18 +104,22 @@ namespace AspNet.Security.Identity.Passage
 
                 var requestToken = Options.StateDataFormat?.Unprotect(protectedRequestToken);
 
-                properties = requestToken;
+                properties = requestToken ?? new AuthenticationProperties
+                {
+                    IssuedUtc = DateTime.UtcNow,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30),
+                };
 
                 string? userId = null;
                 if (query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out var magicLinkValue))
                 {
                     var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]).ConfigureAwait(false);
 
-                    if (Options.SaveTokens && properties != null)
+                    if (Options.SaveTokens)
                     {
                         properties.StoreTokens(new[] {
-                            new AuthenticationToken{ Name = "access_token", Value = authResult.AccessToken },
-                            new AuthenticationToken{ Name = "refresh_token", Value = authResult.RefreshToken }
+                            new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
+                            new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
                         });
                     }
 
@@ -171,17 +175,17 @@ namespace AspNet.Security.Identity.Passage
                     claims.Add(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
                 }
 
-                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var identity = new ClaimsIdentity(claims, Options.SignInScheme);
 
                 //var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
 
-                var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);
+                var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Options.SignInScheme);
 
                 // Raise TicketReceived event to give subscribers a chance to modify the ticket
                 await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
 
                 // Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
-                await Context.SignInAsync(Scheme.Name, ticket.Principal, ticket.Properties).ConfigureAwait(false);
+                await Context.SignInAsync(Options.SignInScheme, ticket.Principal, ticket.Properties).ConfigureAwait(false);
 
                 await Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
 
@@ -191,6 +195,11 @@ namespace AspNet.Security.Identity.Passage
             {
                 _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
                 return HandleRequestResult.Fail(ex);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error");
+                throw;
             }
             finally
             {

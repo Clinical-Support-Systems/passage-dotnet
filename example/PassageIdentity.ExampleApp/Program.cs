@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AspNet.Security.Identity.Passage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -24,28 +25,27 @@ namespace PassageIdentity.ExampleApp
             builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-            builder.Services.AddAuthentication(options =>
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(o =>
             {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = PassageAuthenticationConstants.AuthenticationScheme;
-            })
-            .AddCookie(options =>
-            {
-                options.SlidingExpiration = true;
-                options.LoginPath = "/signin";
-                options.LogoutPath = "/signout";
-                options.AccessDeniedPath = "/accessdenied";
-                options.Events = new CookieAuthenticationEvents
+                o.LoginPath = new PathString("/login");
+
+                o.AccessDeniedPath = new PathString("/access-denied");
+
+                o.Cookie = new CookieBuilder
                 {
-                    // add any required event handlers
+                    Name = ".AspNetCore.Passage"
                 };
-            }).AddPassage(options =>
+            })
+            .AddPassage(options =>
             {
                 options.AppId = builder.Configuration.GetValue<string>("Passage:AppId", string.Empty);
                 options.ApiKey = builder.Configuration.GetValue<string>("Passage:ApiKey", string.Empty);
+                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.SaveTokens = true;
             });
 
+            builder.Services.AddAuthorization();
             builder.Services.AddRazorPages();
 
             var app = builder.Build();

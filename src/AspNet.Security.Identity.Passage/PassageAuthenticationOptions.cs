@@ -41,7 +41,7 @@ namespace AspNet.Security.Identity.Passage
         public string? ApiKey { get; set; }
         public string? AppId { get; set; }
 
-        private const string DefaultStateCookieName = "__PassageState";
+        private const string DefaultStateCookieName = ".AspNetCore.Passage";
 
         private CookieBuilder _stateCookieBuilder;
 
