@@ -370,3 +370,11 @@ public partial class UserMetadata
     [JsonPropertyName("type")]
     public virtual UserMetadataFieldType? Type { get; set; }
 }
+
+public class PassageUserList
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("users")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<User> Users { get; set; } = new();
+}
