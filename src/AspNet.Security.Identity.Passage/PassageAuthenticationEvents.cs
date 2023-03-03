@@ -7,7 +7,7 @@ namespace AspNet.Security.Identity.Passage
         /// <summary>
         /// Gets or sets the function that is invoked when the Authenticated method is invoked.
         /// </summary>
-        public Func<PassageAuthenticationCreatingTicketContext, Task> OnCreatingTicket { get; set; } = context => Task.CompletedTask;
+        public Func<PassageAuthenticationCreatingTicketContext, Task> OnCreatingTicket { get; set; } = _ => Task.CompletedTask;
 
         /// <summary>
         /// Gets or sets the delegate that is invoked when the ApplyRedirect method is invoked.
@@ -33,6 +33,6 @@ namespace AspNet.Security.Identity.Passage
 
         public virtual Task TicketAccepted(TicketAcceptedContext context) => OnTicketAccepted(context);
 
-        public Func<TicketAcceptedContext, Task> OnTicketAccepted { get; set; } = context => Task.CompletedTask;
+        public Func<TicketAcceptedContext, Task> OnTicketAccepted { get; set; } = _ => Task.CompletedTask;
     }
 }

@@ -13,7 +13,6 @@ public class PassageAuthentication
     private string? _bearerToken = string.Empty;
     private string? _refreshToken = string.Empty;
 
-
     public PassageAuthentication(ILogger logger, IHttpClientFactory httpClientFactory, IPassageConfig passageConfig)
     {
         _logger = logger;
@@ -84,7 +83,6 @@ public class PassageAuthentication
 
         return false;
     }
-
 
     /// <summary>
     /// Login with Magic Link

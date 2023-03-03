@@ -28,7 +28,7 @@ namespace PassageIdentity.TagHelpers
                 throw new ArgumentNullException(nameof(output));
             }
 
-            var script = $"<script src=\"https://psg.so/web.js\" defer></script>";
+            var script = "<script src=\"https://psg.so/web.js\" defer></script>";
             output.PreElement.SetHtmlContent(script);
 
             if (!string.IsNullOrEmpty(AppId)) output.Attributes.Add(new TagHelperAttribute("app-id", AppId));

@@ -13,7 +13,15 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <EmbedAllSources>true</EmbedAllSources>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <EnablePackageValidation>true</EnablePackageValidation>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

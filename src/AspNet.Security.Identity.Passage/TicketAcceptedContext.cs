@@ -5,10 +5,10 @@ namespace AspNet.Security.Identity.Passage
 {
     public class TicketAcceptedContext
     {
-        private HttpContext _context;
-        private AuthenticationScheme _scheme;
-        private PassageAuthenticationOptions _options;
-        private AuthenticationTicket _ticket;
+        private readonly HttpContext _context;
+        private readonly AuthenticationScheme _scheme;
+        private readonly PassageAuthenticationOptions _options;
+        private readonly AuthenticationTicket _ticket;
 
         public TicketAcceptedContext(HttpContext context, AuthenticationScheme scheme, PassageAuthenticationOptions options, AuthenticationTicket ticket)
         {
