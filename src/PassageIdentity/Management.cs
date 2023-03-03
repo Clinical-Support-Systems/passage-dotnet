@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 
 namespace PassageIdentity;
@@ -26,14 +29,44 @@ public class PassageManagement
     /// custom element.
     /// </summary>
     /// <param name="ct"></param>
+    /// <param name="name"></param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    public Task ClaimTestAppAsync(CancellationToken ct = default)
+    public async Task ClaimTestAppAsync(string? name = null, CancellationToken ct = default)
     {
         // POST https://api.passage.id/v1/apps/{app_id}/claim/
         // Authorization: Bearer (key/jwt)
         // 200/400/401/404/500
-        throw new NotImplementedException();
+        try
+        {
+            var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/claim/");
+            using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+            var content = new List<KeyValuePair<string, string>>();
+            if (!string.IsNullOrEmpty(name))
+            {
+                content.Add(new KeyValuePair<string, string>("name", name!));
+            }
+            using var form = new FormUrlEncodedContent(content);
+
+            using var response = await client.PostAsync(uri, form, ct).ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     /// <summary>
@@ -44,12 +77,55 @@ public class PassageManagement
     /// <param name="ct"></param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    public Task<App?> CreateAppAsync(App app, CancellationToken ct = default)
+    public async Task<App?> CreateAppAsync(App app, CancellationToken ct = default)
     {
         // POST https://api.passage.id/v1/apps/
         // Authorization: Bearer (key/jwt)
         // 200/400/409/500
-        throw new NotImplementedException();
+
+        try
+        {
+            var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/");
+            using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+            if (app == null)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app must have content"));
+            }
+
+            var jsonContent = JsonSerializer.Serialize(app);
+            using (StringContent stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json"))
+            {
+                using var response = await client.PostAsync(uri, stringContent, ct).ConfigureAwait(false);
+
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+                }
+
+                var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var result = await JsonSerializer.DeserializeAsync<PassageApp>(responseStream, options, ct).ConfigureAwait(false) ?? new();
+                return result.App;
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+
+
+        //throw new NotImplementedException();
     }
 
     /// <summary>
@@ -143,7 +219,10 @@ public class PassageManagement
     /// <exception cref="PassageException"></exception>
     public async Task<IEnumerable<App?>> GetAppsAsync(CancellationToken ct = default)
     {
-        var uri = new Uri("https://api.passage.id/v1/apps/");
+        // GET https://api.passage.id/v1/apps/{app_id}/
+        // Authorization: Bearer (api_key)
+        // 200/401/500
+        var uri = new Uri($"https://api.passage.id/v1/apps/");
         using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
@@ -157,7 +236,7 @@ public class PassageManagement
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage User. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passge Apps. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
         }
 
         var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -210,15 +289,37 @@ public class PassageManagement
     /// <summary>
     /// List users for an app.
     /// </summary>
-    /// <param name="appId"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    public Task<IEnumerable<User?>> GetUsersAsync(string? appId = null, CancellationToken ct = default)
+    public async Task<IEnumerable<User?>> GetUsersAsync(CancellationToken ct = default)
     {
         // GET https://api.passage.id/v1/apps/{app_id}/users/
         // Authorization: Bearer (api_key/auth_token)
         // 200/400/401/404/500
-        throw new NotImplementedException();
+        var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/users/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+        using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage Users. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+        }
+
+        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var result = await JsonSerializer.DeserializeAsync<List<PassageUser>>(responseStream, options, ct).ConfigureAwait(false) ?? new();
+        return result.Select(u => u.User);
     }
 
     /// <summary>
@@ -234,5 +335,42 @@ public class PassageManagement
         // Authorization: Bearer (api_key/auth_token)
         // 200/400/401/404/409/500
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Delete an application.
+    /// </summary>
+    /// <returns></returns>
+    public async Task DeleteAppAsync(CancellationToken ct = default)
+    {
+        // GET https://api.passage.id/v1/apps/{app_id}/users/
+        // Authorization: Bearer (api_key/auth_token)
+        // 200/401/404/500
+
+        try
+        {
+            var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/");
+            using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+            using var response = await client.DeleteAsync(uri, ct).ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage Users. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+            }
+
+
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 }
