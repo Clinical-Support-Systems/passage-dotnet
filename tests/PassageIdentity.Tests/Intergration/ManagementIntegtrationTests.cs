@@ -1,13 +1,18 @@
+using Bogus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;
+using Xunit.Abstractions;
 
 namespace PassageIdentity.Tests.Intergration;
 
 public class ManagementIntegtrationTests : IntegrationTestBase
 {
-    public ManagementIntegtrationTests(IHttpClientFactory httpClientFactory, IConfiguration configuration) : base(httpClientFactory, configuration)
+    public ManagementIntegtrationTests(IHttpClientFactory httpClientFactory,
+                                       IConfiguration configuration,
+                                       ITestOutputHelper testOutputHelper)
+        : base(httpClientFactory, configuration, testOutputHelper)
     {
     }
 
@@ -148,21 +153,27 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
-        byte[] bytes = null;
+        var faker = new Faker();
+        var bytes = Array.Empty<byte>();
         using (var ms = new MemoryStream())
         {
-            using (TextWriter tw = new StreamWriter(ms))
+            using TextWriter tw = new StreamWriter(ms);
+            for (var i = 0; i < faker.Random.Int(1, 3); i++)
             {
-                tw.WriteLine("test1@test.com");
-                tw.WriteLine("test2@test.com");
-                tw.Flush();
-                ms.Position = 0;
-                bytes = ms.ToArray();
+                var emailAddress = faker.Internet.Email();
+                Output.WriteLine($"Adding {emailAddress}");
+                tw.WriteLine(emailAddress);
             }
-
+            tw.Flush();
+            ms.Position = 0;
+            bytes = ms.ToArray();
         }
 
         // Act
+        bytes.ShouldSatisfyAllConditions(
+            b => b.ShouldNotBeNull(),
+            b => b.ShouldNotBe(Array.Empty<byte>())
+        );
         var app = await client.Management.CreateUsersAsync(bytes).ConfigureAwait(false);
 
         // Assert
