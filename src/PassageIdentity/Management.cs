@@ -85,7 +85,7 @@ public class PassageManagement
 
         try
         {
-            var uri = new Uri($"https://api.passage.id/v1/apps/);
+            var uri = new Uri($"https://api.passage.id/v1/apps/");
             using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
@@ -281,7 +281,13 @@ public class PassageManagement
         var uri = new Uri($"https://api.passage.id/v1/apps/");
         using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+        //var content = new List<KeyValuePair<string, string>>();
+        //content.Add(new KeyValuePair<string, string>("refresh_token", ""));
+        //using var refresh_token = new FormUrlEncodedContent(content);
+
+        //using var token = await client.PostAsync(new Uri($"https://auth.passage.id/v1/apps/passage/login/webauthn/start/"), refresh_token, ct).ConfigureAwait(false);
+
+        //client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
 
         using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
 
