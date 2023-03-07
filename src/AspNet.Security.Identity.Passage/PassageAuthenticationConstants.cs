@@ -6,5 +6,6 @@ namespace AspNet.Security.Identity.Passage
         public const string PassageDisplayName = "Passage";
         public const string MagicLinkValue = "psg_magic_link";
         public const string VerifyLinkValue = "psg_verify_link";
+        public const string CookieAuthTokenValue = "psg_auth_token";
     }
 }

@@ -150,7 +150,7 @@ namespace AspNet.Security.Identity.Passage
                 else
                 {
                     // not magic link? check psg_auth_token
-                    var accessToken = Request.Cookies["psg_auth_token"];
+                    var accessToken = Request.Cookies[PassageAuthenticationConstants.CookieAuthTokenValue];
 
                     userId = GetSubFromJwt(accessToken);
 
