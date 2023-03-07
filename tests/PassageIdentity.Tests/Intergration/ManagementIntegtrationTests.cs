@@ -59,7 +59,7 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
         // Act
-        var keys = await client.Management.GetApiKeysAsync().ConfigureAwait(false);
+        var keys = await client.Management.GetAPIKeysAsync().ConfigureAwait(false);
 
         // Assert
         keys.ShouldSatisfyAllConditions(
@@ -171,7 +171,7 @@ public class ManagementIntegtrationTests : IntegrationTestBase
 
     [Fact]
     public async Task Can_Delete_User()
-    { 
+    {
         // Arrange
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
@@ -192,7 +192,7 @@ public class ManagementIntegtrationTests : IntegrationTestBase
 
     [Fact]
     public async Task Can_Revoke_User_Tokens()
-    { 
+    {
         // Arrange
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
@@ -251,15 +251,16 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
         var appId = "";
-        
+
         // Act
         await client.Management.DeleteAppAsync(appId).ConfigureAwait(false);
 
         // Assert
     }
 
-    [Fact]
-    public async Task Can_Create_User()
+    [Theory]
+    [InlineData("testy@test.com")]
+    public async Task Can_Create_User(string emailAddress)
     {
         // Arrange
         var logger = Substitute.For<ILogger>();

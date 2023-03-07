@@ -656,42 +656,6 @@ public partial class PassageQuery
     public virtual DateTime? CreatedAt { get; set; }
 }
 
-
-public partial class PassageApiKeys
-{
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("api_keys")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
-    public virtual Collection<ApiKey> ApiKeys { get; set; } = new();
-}
-
-public partial class ApiKey
-{
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("id")]
-    public virtual string? Id { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("name")]
-    public virtual string? Name { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("role")]
-    public virtual string? Role { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("key_prefix")]
-    public virtual string? KeyPrefix { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("created_at")]
-    public virtual string? CreatedAt { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonPropertyName("plaintext_key")]
-    public virtual string? PlainTextKey { get; set; }
-}
-
 public partial class PassageApiKey
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
