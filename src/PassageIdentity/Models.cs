@@ -18,6 +18,45 @@ public partial class MagicLink
     public virtual string? Id { get; set; }
 }
 
+public partial class CreateMagicLink
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("channel")]
+    public virtual string? Channel { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("email")]
+    public virtual string? Email { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("language")]
+    public virtual string? Language { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("magic_link_path")]
+    public virtual string? MagicLinkPath { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("phone")]
+    public virtual string? Phone { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("redirect_url")]
+    public virtual string? Redirect { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("send")]
+    public virtual bool? Send { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("ttl")]
+    public virtual int? TTL { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user_id")]
+    public virtual string? UserId { get; set; }
+}
+
 [JsonConverter(typeof(CustomJsonStringEnumConverter))]
 public enum AllowedIdentifier
 {
@@ -66,6 +105,43 @@ public enum UserStatus
     Pending,
 
     UserIDDoesNotExist = -1,
+}
+
+[JsonConverter(typeof(CustomJsonStringEnumConverter))]
+public enum AdminRole
+{
+    [EnumMember(Value = "owner")]
+    Owner,
+
+    [EnumMember(Value = "admin")]
+    Admin,
+
+    AdminIDDoesNotExist = -1,
+}
+
+[JsonConverter(typeof(CustomJsonStringEnumConverter))]
+public enum PaginatedEventType
+{
+    [EnumMember(Value = "webauthn.register.initiated")]
+    WebAuthnRegisterInitiated,
+
+    [EnumMember(Value = "webauthn.register.completed")]
+    WebAuthnRegisterCompleted,
+
+    [EnumMember(Value = "webauthn.login.initiated")]
+    WebAuthnLoginInitiated,
+
+    [EnumMember(Value = "webauthn.login.completed")]
+    WebAuthnLoginCompleted,
+
+    [EnumMember(Value = "magic_link.register.initiated")]
+    MagicLinkRegisterInitiated,
+
+    [EnumMember(Value = "magic_link.login.initiated")]
+    MagicLinkLoginInitiated,
+
+    [EnumMember(Value = "magic_link.completed")]
+    MagicLinkCompleted,
 }
 
 public partial class App
@@ -290,6 +366,53 @@ public partial class PassageUser
     public virtual User? User { get; set; }
 }
 
+public partial class PassageAdmins
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("admins")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<AdminMember> Admins { get; set; } = new();
+}
+
+public partial class PassageAdmin
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("admin")]
+    public virtual AdminMember? Admin { get; set; } = new();
+}
+
+public partial class AdminMember
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("email")]
+    public virtual string? Email { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("created_at")]
+    public virtual DateTime? CreatedAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("id")]
+    public virtual string? Id { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user_id")]
+    public virtual string? userId { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("app_id")]
+    public virtual string? AppId { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("role")]
+    public virtual AdminRole? Role { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("technologies")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<string>? Technologies { get; set; } = new();
+}
+
 public partial class User
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -371,7 +494,7 @@ public partial class UserMetadata
     public virtual UserMetadataFieldType? Type { get; set; }
 }
 
-public class PassageUserList
+public partial class PassageUserList
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("users")]
@@ -379,14 +502,14 @@ public class PassageUserList
     public virtual Collection<User> Users { get; set; } = new();
 }
 
-public class PassageWebAuthLogin
+public partial class PassageWebAuthLogin
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("handshake")]
     public virtual HandShake? HandShake { get; set; }
 }
 
-public class HandShake
+public partial class HandShake
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("challenge")]
@@ -397,7 +520,7 @@ public class HandShake
     public virtual User? User { get; set; }
 }
 
-public class HandShakeChallenge
+public partial class HandShakeChallenge
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("publicKey")]
@@ -408,7 +531,7 @@ public class HandShakeChallenge
     public virtual string? Id { get; set; }
 }
 
-public class PublicKey
+public partial class PublicKey
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("challenge")]
@@ -425,4 +548,163 @@ public class PublicKey
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("userVerification")]
     public virtual string? UserVerification { get; set; }
+}
+
+public partial class ListPassageUsersQuery : PassageQuery
+{
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("login_count")]
+    public virtual string? LoginCount { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("status")]
+    public virtual string? Status { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("email_verified")]
+    public virtual string? EmailVerified { get; set; }
+
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("updated_at")]
+    public virtual DateTime? UpdatedAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("last_login_at")]
+    public virtual DateTime? LastLoginAt { get; set; }
+}
+
+public partial class PassagePaginatedEventsQuery : PassageQuery
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user_id")]
+    public virtual string? UserId { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("ip_addr")]
+    public virtual string? IpAddress { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user_agent")]
+    public virtual string? UserAgent { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("type")]
+    public virtual PaginatedEventType? PaginatedEventType { get; set; }
+}
+
+
+public partial class PassageQuery
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("page")]
+    public virtual int Page { get; set; } = 1;
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("limit")]
+    public virtual int? Limit { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("order_by")]
+    public virtual string? OrderBy { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("created_before")]
+    public virtual DateTime? CreatedBefore { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("identifier")]
+    public virtual string? Identifier { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("id")]
+    public virtual string? Id { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("created_at")]
+    public virtual DateTime? CreatedAt { get; set; }
+}
+
+
+public partial class PassageApiKeys
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("api_keys")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<ApiKey> ApiKeys { get; set; } = new();
+}
+
+public partial class ApiKey
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("id")]
+    public virtual string? Id { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("name")]
+    public virtual string? Name { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("role")]
+    public virtual string? Role { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("key_prefix")]
+    public virtual string? KeyPrefix { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("created_at")]
+    public virtual string? CreatedAt { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("plaintext_key")]
+    public virtual string? PlainTextKey { get; set; }
+}
+
+public partial class PassageApiKey
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("api_key")]
+    public virtual ApiKey? ApiKey { get; set; }
+}
+
+public partial class PassagePaginatedEvents
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("events")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<PaginatedEvent> Events { get; set; } = new();
+}
+
+
+public partial class PaginatedEvent
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("id")]
+    public virtual string? Id { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user_id")]
+    public virtual string? UserId { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("type")]
+    public virtual PaginatedEventType? Type { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("identifier")]
+    public virtual string? Identifier { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("ip_addr")]
+    public virtual string? IpAddress { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("user_agent")]
+    public virtual string? UserAgent { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("created_at")]
+    public virtual DateTime? CreatedAt { get; set; }
 }

@@ -54,7 +54,7 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
         // Act
-        var app = await client.Management.GetUsersAsync().ConfigureAwait(false);
+        var app = await client.Management.GetUsersAsync(new ListPassageUsersQuery { }).ConfigureAwait(false);
 
         // Assert
         app.ShouldSatisfyAllConditions(
