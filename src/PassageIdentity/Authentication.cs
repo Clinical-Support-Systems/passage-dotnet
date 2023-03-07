@@ -1,7 +1,10 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 using Microsoft.Extensions.Logging;
 
 namespace PassageIdentity;
@@ -21,25 +24,9 @@ public class PassageAuthentication
         _passageConfig = passageConfig;
     }
 
-    public Task<User?> ActivateUserAsync(string identifier, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<User?> CreateUserAsync(string? email, string? phone, Dictionary<string, object>? userMetadata = null, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<User?> DeactivateUserAsync(string identifier, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> DeleteUserAsync(string identifier, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
+    /*******************************/
+    /************ Users ************/
+    /*******************************/
 
     /// <summary>
     /// Get information about an application.
@@ -50,7 +37,7 @@ public class PassageAuthentication
     /// <returns></returns>
     public async Task<App?> GetApp(string? appId = null, CancellationToken ct = default)
     {
-        var uri = new Uri($"https://api.passage.id/v1/apps/{appId ?? _passageConfig.AppId}/");
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{appId ?? _passageConfig.AppId}/");
         using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
         //client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ConfigAPIKey);
@@ -84,6 +71,10 @@ public class PassageAuthentication
 
         return false;
     }
+
+    /*******************************/
+    /********* Magic Links *********/
+    /*******************************/
 
     /// <summary>
     /// Login with Magic Link
@@ -131,27 +122,50 @@ public class PassageAuthentication
         return result?.MagicLink ?? new();
     }
 
-    public async Task<PassageAuthResult?> GetToken(string? refreshToken = null, CancellationToken ct = default)
-    {
-        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/tokens/");
-        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
-        refreshToken ??= _refreshToken;
-        var content = new List<KeyValuePair<string, string>>();
-        if (!string.IsNullOrEmpty(refreshToken))
-        {
-            content.Add(new KeyValuePair<string, string>("refresh_token", refreshToken!));
-        }
-        using var form = new FormUrlEncodedContent(content);
 
-        using var response = await client.PostAsync(uri, form, ct).ConfigureAwait(false);
-        using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+    /// <summary>
+    /// Authenticate a magic link for a user. This endpoint checks that the magic link is valid, then returns an authentication token for the user.
+    /// </summary>
+    /// <param name="magicLink"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<AuthResult> CompleteMagicLinkLoginAsync(string? magicLink, CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/magic-link/activate/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+        var payload = new { magic_link = magicLink };
+        var payloadJson = JsonSerializer.Serialize(payload);
+        using var request = new HttpRequestMessage
+        {
+            Method = new HttpMethod("PATCH"),
+            RequestUri = uri,
+            Content = new StringContent(payloadJson)
+            {
+                Headers =
+        {
+            ContentType = new MediaTypeHeaderValue("application/json")
+        }
+            }
+        };
+        using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PassageException($"Failed to authenticate using magic link '{magicLink}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+        }
+
+        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         var options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         };
-        var results = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
-        return results ?? new();
+        var result = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
+        return result?.Result ?? new();
     }
+
+    /*******************************/
+    /************ Users ************/
+    /*******************************/
 
     /// <summary>
     /// Get user information, if the user exists. This endpoint can be used to determine whether a
@@ -164,12 +178,19 @@ public class PassageAuthentication
     /// <exception cref="Exception"></exception>
     public async Task<User?> GetUserAsync(string identifier, CancellationToken ct = default)
     {
-        var uri = new Uri($"https://api.passage.id/v1/apps/{_passageConfig.AppId}/users/{identifier}");
+        var queryBuilder = HttpUtility.ParseQueryString(string.Empty);
+        queryBuilder["identifier"] = identifier;
+        var queryString = queryBuilder.ToString();
+
+
+        var uri = new UriBuilder($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/users/");
+        uri.Query = queryString;
+
         using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
 
-        //client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ConfigAPIKey);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _bearerToken);
 
-        using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
+        using var response = await client.GetAsync(uri.ToString(), ct).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             throw new PassageException(string.Format(CultureInfo.InvariantCulture, $"Failed to get user by identifier '{identifier}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}"), response);
@@ -227,45 +248,9 @@ public class PassageAuthentication
         throw new NotImplementedException();
     }
 
-    /// <summary>
-    /// Authenticate a magic link for a user. This endpoint checks that the magic link is valid, then returns an authentication token for the user.
-    /// </summary>
-    /// <param name="magicLink"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
-    /// <exception cref="PassageException"></exception>
-    public async Task<AuthResult> CompleteMagicLinkLoginAsync(string? magicLink, CancellationToken ct = default)
-    {
-        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/magic-link/activate/");
-        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
-        var payload = new { magic_link = magicLink };
-        var payloadJson = JsonSerializer.Serialize(payload);
-        using var request = new HttpRequestMessage
-        {
-            Method = new HttpMethod("PATCH"),
-            RequestUri = uri,
-            Content = new StringContent(payloadJson)
-            {
-                Headers =
-        {
-            ContentType = new MediaTypeHeaderValue("application/json")
-        }
-            }
-        };
-        using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new PassageException($"Failed to authenticate using magic link '{magicLink}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
-        }
-
-        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        var result = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
-        return result?.Result ?? new();
-    }
+    /*******************************/
+    /********** Web Authn **********/
+    /*******************************/
 
     /// <summary>
     /// Initiate a WebAuthn login for a user. This endpoint creates a WebAuthn credential assertion challenge that is used to perform the login ceremony from the browser.
@@ -331,5 +316,145 @@ public class PassageAuthentication
             var result = await JsonSerializer.DeserializeAsync<PassageWebAuthLogin>(responseStream, options, ct).ConfigureAwait(false);
             //return result ?? new();
         }
+    }
+
+    /// <summary>
+    /// Initiate a WebAuthn registration and create the user. This endpoint creates a WebAuthn credential creation challenge that is used to perform the registration ceremony from the browser.
+    /// </summary>
+    /// <param name="identifier"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<PassageWebAuthLogin> WebAuthRegisterStart(string identifier, CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/register/webauthn/start/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        if (string.IsNullOrWhiteSpace(identifier)) throw new PassageException("Identifier required (valid email or phone number)");
+
+        var payload = new { identifier = identifier };
+        var jsonContent = JsonSerializer.Serialize(payload);
+        using (StringContent stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json"))
+        {
+
+            using var response = await client.PostAsync(uri, stringContent, ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException($"Failed to start WebAuth for App '{_passageConfig.AppId}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var result = await JsonSerializer.DeserializeAsync<PassageWebAuthLogin>(responseStream, options, ct).ConfigureAwait(false);
+            return result ?? new();
+        }
+    }
+
+    /// <summary>
+    /// Finish WebAuthn Registration
+    /// Complete a WebAuthn registration and authenticate the user.This endpoint accepts and verifies the response from navigator.credential.create() and returns an authentication token for the user.
+    /// </summary>
+    /// <param name="identifier"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<PassageWebAuthLogin> WebAuthRegisterFinish(string identifier, CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/register/webauthn/finish/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        if (string.IsNullOrWhiteSpace(identifier)) throw new PassageException("Identifier required (valid email or phone number)");
+
+        var payload = new { user_id = identifier };
+        var jsonContent = JsonSerializer.Serialize(payload);
+        using (StringContent stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json"))
+        {
+
+            using var response = await client.PostAsync(uri, stringContent, ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException($"Failed to finish WebAuth for App '{_passageConfig.AppId}'. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}", response);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var result = await JsonSerializer.DeserializeAsync<PassageWebAuthLogin>(responseStream, options, ct).ConfigureAwait(false);
+            return result ?? new();
+        }
+    }
+
+    /*******************************/
+    /***** Session Management ******/
+    /*******************************/
+
+    /// <summary>
+    /// Creates new auth and refresh token
+    /// Creates and returns a new auth token and a new refresh token
+    /// </summary>
+    /// <param name="refreshToken"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async Task<PassageAuthResult?> GetToken(string? refreshToken = null, CancellationToken ct = default)
+    {
+        var uri = new Uri($"https://auth.passage.id/v1/apps/{_passageConfig.AppId}/tokens/");
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+        refreshToken ??= _refreshToken;
+        var content = new List<KeyValuePair<string, string>>();
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            content.Add(new KeyValuePair<string, string>("refresh_token", refreshToken!));
+        }
+        using var form = new FormUrlEncodedContent(content);
+
+        using var response = await client.PostAsync(uri, form, ct).ConfigureAwait(false);
+        using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var results = await JsonSerializer.DeserializeAsync<PassageAuthResult>(responseStream, options, ct).ConfigureAwait(false);
+        return results ?? new();
+    }
+
+
+    /// <summary>
+    /// Revokes the refresh token
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="PassageException"></exception>
+    public async Task<User?> DeleteRefreshToken(CancellationToken ct = default)
+    {
+        var queryBuilder = HttpUtility.ParseQueryString(string.Empty);
+        queryBuilder["refresh_token"] = _refreshToken;
+        var queryString = queryBuilder.ToString();
+
+
+        var uri = new UriBuilder($"https://api.passage.id/v1/apps/{_passageConfig.AppId}/tokens/");
+        uri.Query = queryString;
+
+        using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+        //client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ConfigAPIKey);
+
+        using var response = await client.DeleteAsync(uri.ToString(), ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PassageException(string.Format(CultureInfo.InvariantCulture, $"Failed to delete the refresh token. StatusCode: {response.StatusCode}, ReasonPhrase: {response.ReasonPhrase}"), response);
+        }
+
+        var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var userBody = await JsonSerializer.DeserializeAsync<PassageUser>(responseStream, options, ct).ConfigureAwait(false);
+        return userBody?.User;
     }
 }
