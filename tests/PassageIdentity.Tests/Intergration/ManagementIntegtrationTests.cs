@@ -1,13 +1,18 @@
+using Bogus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;
+using Xunit.Abstractions;
 
 namespace PassageIdentity.Tests.Intergration;
 
 public class ManagementIntegtrationTests : IntegrationTestBase
 {
-    public ManagementIntegtrationTests(IHttpClientFactory httpClientFactory, IConfiguration configuration) : base(httpClientFactory, configuration)
+    public ManagementIntegtrationTests(IHttpClientFactory httpClientFactory,
+                                       IConfiguration configuration,
+                                       ITestOutputHelper testOutputHelper)
+        : base(httpClientFactory, configuration, testOutputHelper)
     {
     }
 
@@ -47,6 +52,28 @@ public class ManagementIntegtrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task Can_Get_ApiKeys()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        // Act
+        var keys = await client.Management.GetApiKeysAsync().ConfigureAwait(false);
+
+        // Assert
+        keys.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x!.Any().ShouldNotBe(false),
+            x => x.All(k => !string.IsNullOrEmpty(k.Id)).ShouldBeTrue(),
+            x => x.All(k => !string.IsNullOrEmpty(k.Name)).ShouldBeTrue(),
+            x => x.All(k => !string.IsNullOrEmpty(k.Role)).ShouldBeTrue(),
+            x => x.All(k => !string.IsNullOrEmpty(k.KeyPrefix)).ShouldBeTrue(),
+            x => x.All(k => k.CreatedAt > DateTime.MinValue).ShouldBeTrue()
+        );
+    }
+
+    [Fact]
     public async Task Can_Get_Users()
     {
         // Arrange
@@ -59,18 +86,17 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         // Assert
         app.ShouldSatisfyAllConditions(
             x => x.ShouldNotBeNull(),
-            x => x!.Any().ShouldNotBe(false)
+            x => x!.Any().ShouldBeTrue()
         );
     }
 
-    [Fact]
-    public async Task Can_Get_User()
+    [Theory]
+    [InlineData("KjhfIloBeaflZGd5ipm6oMge")]
+    public async Task Can_Get_User(string identifier)
     {
         // Arrange
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
-
-        var identifier = "KjhfIloBeaflZGd5ipm6oMge";
 
         // Act
         var app = await client.Management.GetUserAsync(identifier).ConfigureAwait(false);
@@ -239,7 +265,7 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
-        var testUser = new User() { Email = "test@testy.com" };
+        var testUser = new User() { Email = emailAddress };
 
         // Act
         var app = await client.Management.CreateUserAsync(testUser).ConfigureAwait(false);
@@ -258,21 +284,27 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         var logger = Substitute.For<ILogger>();
         var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
 
-        byte[] bytes = null;
+        var faker = new Faker();
+        var bytes = Array.Empty<byte>();
         using (var ms = new MemoryStream())
         {
-            using (TextWriter tw = new StreamWriter(ms))
+            using TextWriter tw = new StreamWriter(ms);
+            for (var i = 0; i < faker.Random.Int(1, 3); i++)
             {
-                tw.WriteLine("test1@test.com");
-                tw.WriteLine("test2@test.com");
-                tw.Flush();
-                ms.Position = 0;
-                bytes = ms.ToArray();
+                var emailAddress = faker.Internet.Email();
+                Output.WriteLine($"Adding {emailAddress}");
+                tw.WriteLine(emailAddress);
             }
-
+            tw.Flush();
+            ms.Position = 0;
+            bytes = ms.ToArray();
         }
 
         // Act
+        bytes.ShouldSatisfyAllConditions(
+            b => b.ShouldNotBeNull(),
+            b => b.ShouldNotBe(Array.Empty<byte>())
+        );
         var app = await client.Management.CreateUsersAsync(bytes).ConfigureAwait(false);
 
         // Assert

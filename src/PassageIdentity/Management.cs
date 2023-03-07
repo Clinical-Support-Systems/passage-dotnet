@@ -1144,4 +1144,40 @@ public class PassageManagement
             throw;
         }
     }
+
+    public async Task<IEnumerable<ApiKey>> GetApiKeysAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var uri = new Uri($"https://api.passage.id/v1/apps/{_config.AppId}/api-keys/");
+            using var client = _httpClientFactory.CreateClient(PassageConsts.NamedClient);
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+            using var response = await client.GetAsync(uri, ct).ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Passage app with ID \"{0}\" does not exist", _config.AppId), response);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PassageException(string.Format(CultureInfo.InvariantCulture, "Failed to get Passage Users. StatusCode: {0}, ReasonPhrase: {1}", response.StatusCode, response.ReasonPhrase), response);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var result = await JsonSerializer.DeserializeAsync<PassageApiKeys>(responseStream, options, ct).ConfigureAwait(false) ?? new();
+            return result.ApiKeys;
+
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
 }

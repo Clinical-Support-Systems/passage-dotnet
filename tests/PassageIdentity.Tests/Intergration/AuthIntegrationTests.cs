@@ -2,14 +2,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;
+using Xunit.Abstractions;
 
 namespace PassageIdentity.Tests.Intergration;
 
 public class AuthIntegrationTests : IntegrationTestBase
 {
     public AuthIntegrationTests(IHttpClientFactory httpClientFactory,
-        IConfiguration configuration)
-        : base(httpClientFactory, configuration)
+                                IConfiguration configuration,
+                                ITestOutputHelper testOutputHelper)
+        : base(httpClientFactory, configuration, testOutputHelper)
     {
     }
 
