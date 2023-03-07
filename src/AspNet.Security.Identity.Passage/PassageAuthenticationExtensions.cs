@@ -112,7 +112,7 @@ namespace AspNet.Security.Identity.Passage
             builder.Services.AddHttpClient(PassageConsts.NamedClient);
             builder.Services.TryAddSingleton<JwtSecurityTokenHandler>();
 
-            return builder.AddRemoteScheme<PassageAuthenticationOptions, PassageAuthenticationHandler>(scheme, caption, configuration);
+            return builder.AddScheme<PassageAuthenticationOptions, PassageAuthenticationHandler>(scheme, caption, configuration);
         }
     }
 }

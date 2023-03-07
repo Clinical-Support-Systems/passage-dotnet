@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace AspNet.Security.Identity.Passage
 {
-    public class PassageAuthenticationOptions : RemoteAuthenticationOptions
+    public class PassageAuthenticationOptions : AuthenticationSchemeOptions
     {
         private sealed class PassageCookieBuilder : CookieBuilder
         {
@@ -19,7 +19,7 @@ namespace AspNet.Security.Identity.Passage
                 var options = base.Build(context, expiresFrom);
                 if (!Expiration.HasValue)
                 {
-                    options.Expires = expiresFrom.Add(_options.RemoteAuthenticationTimeout);
+                    options.Expires = expiresFrom.Add(_options.AuthenticationTimeout);
                 }
                 return options;
             }
@@ -27,7 +27,7 @@ namespace AspNet.Security.Identity.Passage
 
         public PassageAuthenticationOptions()
         {
-            CallbackPath = new PathString("/signin-passage");
+            //CallbackPath = new PathString("/signin-passage");
 
             _stateCookieBuilder = new PassageCookieBuilder(this)
             {
@@ -59,5 +59,6 @@ namespace AspNet.Security.Identity.Passage
         /// Gets or sets the type used to secure data handled by the middleware.
         /// </summary>
         public ISecureDataFormat<AuthenticationProperties>? StateDataFormat { get; set; }
+        public TimeSpan AuthenticationTimeout { get; private set; } = TimeSpan.FromDays(1);
     }
 }

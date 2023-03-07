@@ -11,7 +11,7 @@ using PassageIdentity;
 
 namespace AspNet.Security.Identity.Passage
 {
-    public class PassageAuthenticationHandler : RemoteAuthenticationHandler<PassageAuthenticationOptions>
+    public class PassageAuthenticationHandler : AuthenticationHandler<PassageAuthenticationOptions>
     {
         private readonly PassageClient _client;
         private readonly ILogger<PassageAuthenticationHandler> _logger;
@@ -94,8 +94,251 @@ namespace AspNet.Security.Identity.Passage
         //    //return Task.FromResult(query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out _));
         //}
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
+        protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
+        {
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
+            var query = Request.Query;
+            if (query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out var magicLinkValue))
+            {
+                var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]);
+
+                //// Fetch the user using the Management API
+                //var userId = GetSubFromJwt(authResult.AccessToken);
+                //var user = await _client.Management.GetUserAsync(userId);
+
+                //if (user == null)
+                //{
+                //    return;
+                //}
+
+                //var identity = new ClaimsIdentity(Scheme.Name);
+                //identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
+                //identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
+
+                //if (!string.IsNullOrEmpty(user.Email))
+                //{
+                //    identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+                //}
+                //if (!string.IsNullOrEmpty(user.Phone))
+                //{
+                //    identity.AddClaim(new Claim(ClaimTypes.HomePhone, user.Phone));
+                //}
+                //if (user.CreatedAt != null)
+                //{
+                //    identity.AddClaim(new Claim(InternalClaimTypes.CreatedAt, user.CreatedAt.ToString()));
+                //}
+                //if (user.UpdatedAt != null)
+                //{
+                //    identity.AddClaim(new Claim(InternalClaimTypes.UpdatedAt, user.UpdatedAt.ToString()));
+                //}
+                //if (user.LastLoginAt != null)
+                //{
+                //    identity.AddClaim(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
+                //}
+
+                //var ticket = await CreateTicketAsync(identity, properties, user);
+                //if (ticket == null)
+                //{
+                //    Log.SkippedDueToNullTicket(Logger);
+
+                //    return;
+                //}
+
+                //// Raise TicketReceived event to give subscribers a chance to modify the ticket
+                //await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket));
+
+                ////// Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
+                //await Context.SignInAsync(Options.SignInScheme, ticket.Principal, ticket.Properties);
+
+                var redirectContext = new RedirectContext<PassageAuthenticationOptions>(
+                Context, Scheme, Options,
+                properties, properties.RedirectUri ?? authResult.RedirectUrl?.ToString());
+
+                await Events.RedirectToAuthorizationEndpoint(redirectContext);
+            }
+            else
+            {
+                await base.HandleChallengeAsync(properties);
+            }
+        }
+
+        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
+        //protected override async Task<HandleRequestResult> HandleRemoteAuthenticateAsync()
+        //{
+        //    using var cts = new CancellationTokenSource();
+        //    try
+        //    {
+        //        AuthenticationProperties? properties = null;
+        //        var query = Request.Query;
+        //        var protectedRequestToken = Request.Cookies[Options.StateCookie.Name];
+
+        //        var requestToken = Options.StateDataFormat?.Unprotect(protectedRequestToken);
+
+        //        properties = requestToken ?? new AuthenticationProperties
+        //        {
+        //            IssuedUtc = DateTime.UtcNow,
+        //            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30),
+        //        };
+
+        //        string? userId = null;
+        //        if (query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out var magicLinkValue))
+        //        {
+        //            var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]);
+
+        //            if (Options.SaveTokens)
+        //            {
+        //                properties.StoreTokens(new[] {
+        //                    new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
+        //                    new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+        //                });
+        //            }
+
+        //            // We have a JWT, todo validate
+        //            _client.Management.Auth = authResult;
+
+        //            userId = GetSubFromJwt(authResult.AccessToken);
+        //        }
+        //        else if (query.TryGetValue(PassageAuthenticationConstants.VerifyLinkValue, out var verifyLinkValue))
+        //        {
+        //            var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(verifyLinkValue[0]);
+
+        //            if (Options.SaveTokens)
+        //            {
+        //                properties.StoreTokens(new[] {
+        //                    new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
+        //                    new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+        //                });
+        //            }
+
+        //            // We have a JWT, todo validate
+        //            _client.Management.Auth = authResult;
+
+        //            userId = GetSubFromJwt(authResult.AccessToken);
+        //        }
+        //        else
+        //        {
+        //            // not magic link? check psg_auth_token
+        //            var accessToken = Request.Cookies[PassageAuthenticationConstants.CookieAuthTokenValue];
+
+        //            userId = GetSubFromJwt(accessToken);
+
+        //            if (Options.SaveTokens)
+        //            {
+        //                properties.StoreTokens(new[] {
+        //                     new AuthenticationToken { Name = "access_token", Value = accessToken },
+        //                     //new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+        //                });
+        //            }
+        //        }
+
+        //        //if (query.TryGetValue("state", out var state))
+        //        //{
+        //        //    properties = Options.StateDataFormat?.Unprotect(state);
+        //        //    if (properties == null)
+        //        //    {
+        //        //        return HandleRequestResult.Fail("The state was missing or invalid.");
+        //        //    }
+        //        //}
+
+        //        // Fetch the user using the Management API
+        //        var user = await _client.Management.GetUserAsync(userId, ct: cts.Token);
+
+        //        if (user == null)
+        //        {
+        //            return HandleRequestResult.Fail("Could not find user.");
+        //        }
+
+        //        var identity = new ClaimsIdentity(Scheme.Name);
+        //        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
+        //        identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
+
+        //        if (!string.IsNullOrEmpty(user.Email))
+        //        {
+        //            identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+        //        }
+        //        if (!string.IsNullOrEmpty(user.Phone))
+        //        {
+        //            identity.AddClaim(new Claim(ClaimTypes.HomePhone, user.Phone));
+        //        }
+        //        if (user.CreatedAt != null)
+        //        {
+        //            identity.AddClaim(new Claim(InternalClaimTypes.CreatedAt, user.CreatedAt.ToString()));
+        //        }
+        //        if (user.UpdatedAt != null)
+        //        {
+        //            identity.AddClaim(new Claim(InternalClaimTypes.UpdatedAt, user.UpdatedAt.ToString()));
+        //        }
+        //        if (user.LastLoginAt != null)
+        //        {
+        //            identity.AddClaim(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
+        //        }
+
+        //        var ticket = await CreateTicketAsync(identity, properties, user);
+        //        if (ticket == null)
+        //        {
+        //            Log.SkippedDueToNullTicket(Logger);
+
+        //            return HandleRequestResult.SkipHandler();
+        //        }
+
+        //        // Raise TicketReceived event to give subscribers a chance to modify the ticket
+        //        await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket));
+
+        //        //// Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
+        //        await Context.SignInAsync(Options.SignInScheme, ticket.Principal, ticket.Properties);
+
+        //        await Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket));
+
+        //        return HandleRequestResult.Success(ticket);
+        //    }
+        //    catch (PassageException ex)
+        //    {
+        //        _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
+        //        return HandleRequestResult.Fail(ex);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        _logger.LogError(e, "Error");
+        //        throw;
+        //    }
+        //    finally
+        //    {
+        //        cts.Cancel();
+        //    }
+        //}
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
+        private async Task<AuthenticationTicket> CreateTicketAsync(
+            [NotNull] ClaimsIdentity identity,
+            [NotNull] AuthenticationProperties properties,
+            [NotNull] User user)
+        {
+            var principal = new ClaimsPrincipal(identity);
+            var ticket = new AuthenticationTicket(principal, properties, Scheme.Name);
+
+            var context = new PassageAuthenticatedContext(Context, Scheme, Options, ticket);
+
+            // Copy the attributes to the context object.
+            //foreach (var attribute in attributes)
+            //{
+            //    context.Attributes.Add(attribute);
+            //}
+
+            await Events.Authenticated(context);
+
+            // Note: return the authentication ticket associated
+            // with the notification to allow replacing the ticket.
+            return context.Ticket;
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "<Pending>")]
-        protected override async Task<HandleRequestResult> HandleRemoteAuthenticateAsync()
+        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             using var cts = new CancellationTokenSource();
             try
@@ -115,15 +358,12 @@ namespace AspNet.Security.Identity.Passage
                 string? userId = null;
                 if (query.TryGetValue(PassageAuthenticationConstants.MagicLinkValue, out var magicLinkValue))
                 {
-                    var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]).ConfigureAwait(false);
+                    var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(magicLinkValue[0]);
 
-                    if (Options.SaveTokens)
-                    {
-                        properties.StoreTokens(new[] {
-                            new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
-                            new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
-                        });
-                    }
+                    properties.StoreTokens(new[] {
+                                new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
+                                new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+                            });
 
                     // We have a JWT, todo validate
                     _client.Management.Auth = authResult;
@@ -134,13 +374,10 @@ namespace AspNet.Security.Identity.Passage
                 {
                     var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(verifyLinkValue[0]);
 
-                    if (Options.SaveTokens)
-                    {
-                        properties.StoreTokens(new[] {
-                            new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
-                            new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
-                        });
-                    }
+                    properties.StoreTokens(new[] {
+                                new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
+                                new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+                            });
 
                     // We have a JWT, todo validate
                     _client.Management.Auth = authResult;
@@ -154,13 +391,10 @@ namespace AspNet.Security.Identity.Passage
 
                     userId = GetSubFromJwt(accessToken);
 
-                    if (Options.SaveTokens)
-                    {
-                        properties.StoreTokens(new[] {
-                             new AuthenticationToken { Name = "access_token", Value = accessToken },
-                             //new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
-                        });
-                    }
+                    properties.StoreTokens(new[] {
+                                 new AuthenticationToken { Name = "access_token", Value = accessToken },
+                                 //new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+                            });
                 }
 
                 //if (query.TryGetValue("state", out var state))
@@ -182,6 +416,7 @@ namespace AspNet.Security.Identity.Passage
 
                 var identity = new ClaimsIdentity(Scheme.Name);
                 identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
+                identity.AddClaim(new Claim(ClaimTypes.Name, user.Email));
 
                 if (!string.IsNullOrEmpty(user.Email))
                 {
@@ -209,27 +444,23 @@ namespace AspNet.Security.Identity.Passage
                 {
                     Log.SkippedDueToNullTicket(Logger);
 
-                    return HandleRequestResult.SkipHandler();
+                    return AuthenticateResult.NoResult();
                 }
 
-                //var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
-
-                //var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Options.SignInScheme);
-
                 // Raise TicketReceived event to give subscribers a chance to modify the ticket
-                await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
+                //await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket));
 
                 // Accept the ticket to update user's ClaimsPrincipal and mark user as authenticated
-                await Context.SignInAsync(Options.SignInScheme, ticket.Principal, ticket.Properties).ConfigureAwait(false);
+                await Context.SignInAsync("Passage", ticket.Principal, ticket.Properties);
 
-                await Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
+                await Events.TicketAccepted(new TicketAcceptedContext(Context, Scheme, Options, ticket));
 
-                return HandleRequestResult.Success(ticket);
+                return AuthenticateResult.Success(ticket);
             }
             catch (PassageException ex)
             {
                 _logger.LogDebug(ex, "Error authenticating with {Handler}", nameof(PassageAuthenticationHandler));
-                return HandleRequestResult.Fail(ex);
+                return AuthenticateResult.Fail(ex);
             }
             catch (Exception e)
             {
@@ -240,30 +471,6 @@ namespace AspNet.Security.Identity.Passage
             {
                 cts.Cancel();
             }
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
-        private async Task<AuthenticationTicket> CreateTicketAsync(
-            [NotNull] ClaimsIdentity identity,
-            [NotNull] AuthenticationProperties properties,
-            [NotNull] User user)
-        {
-            var principal = new ClaimsPrincipal(identity);
-            var ticket = new AuthenticationTicket(principal, properties, Scheme.Name);
-
-            var context = new PassageAuthenticatedContext(Context, Scheme, Options, ticket);
-
-            // Copy the attributes to the context object.
-            //foreach (var attribute in attributes)
-            //{
-            //    context.Attributes.Add(attribute);
-            //}
-
-            await Events.Authenticated(context);
-
-            // Note: return the authentication ticket associated
-            // with the notification to allow replacing the ticket.
-            return context.Ticket;
         }
     }
 

@@ -41,8 +41,8 @@ namespace PassageIdentity.ExampleApp
             {
                 options.AppId = builder.Configuration.GetValue<string>("Passage:AppId", string.Empty);
                 options.ApiKey = builder.Configuration.GetValue<string>("Passage:ApiKey", string.Empty);
-                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.SaveTokens = true;
+                //options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                //options.SaveTokens = true;
             });
 
             builder.Services.AddAuthorization();

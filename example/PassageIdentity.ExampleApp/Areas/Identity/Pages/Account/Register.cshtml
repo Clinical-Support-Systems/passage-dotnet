@@ -1,13 +1,14 @@
 @page
-@model RegisterModel
 @inject IConfiguration _config
+@model RegisterModel
 @{
     ViewData["Title"] = "Register";
 }
 
+<h1>@ViewData["Title"]</h1>
+
 <div class="row">
     <div class="col">
-        <h2>Profile</h2>
-        <passage-profile app-id="@_config["Passage:AppId"]" />
+        <passage-register app-id="@_config["Passage:AppId"]" />
     </div>
 </div>
