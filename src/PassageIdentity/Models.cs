@@ -256,6 +256,14 @@ public partial class AuthResult
     public virtual long? RefreshTokenExpiration { get; set; }
 }
 
+public class PassageDevies
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("devices")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
+    public virtual Collection<Device>? Devices { get; set; } = new();
+}
+
 public class Device
 {
     /// <summary>
