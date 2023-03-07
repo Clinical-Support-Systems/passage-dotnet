@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -128,9 +130,37 @@ namespace AspNet.Security.Identity.Passage
 
                     userId = GetSubFromJwt(authResult.AccessToken);
                 }
+                else if (query.TryGetValue(PassageAuthenticationConstants.VerifyLinkValue, out var verifyLinkValue))
+                {
+                    var authResult = await _client.Authentication.CompleteMagicLinkLoginAsync(verifyLinkValue[0]);
+
+                    if (Options.SaveTokens)
+                    {
+                        properties.StoreTokens(new[] {
+                            new AuthenticationToken { Name = "access_token", Value = authResult.AccessToken },
+                            new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+                        });
+                    }
+
+                    // We have a JWT, todo validate
+                    _client.Management.Auth = authResult;
+
+                    userId = GetSubFromJwt(authResult.AccessToken);
+                }
                 else
                 {
-                    // not magic link?
+                    // not magic link? check psg_auth_token
+                    var accessToken = Request.Cookies["psg_auth_token"];
+
+                    userId = GetSubFromJwt(accessToken);
+
+                    if (Options.SaveTokens)
+                    {
+                        properties.StoreTokens(new[] {
+                             new AuthenticationToken { Name = "access_token", Value = accessToken },
+                             //new AuthenticationToken { Name = "refresh_token", Value = authResult.RefreshToken }
+                        });
+                    }
                 }
 
                 //if (query.TryGetValue("state", out var state))
@@ -143,43 +173,48 @@ namespace AspNet.Security.Identity.Passage
                 //}
 
                 // Fetch the user using the Management API
-                var user = await _client.Management.GetUserAsync(userId, ct: cts.Token).ConfigureAwait(false);
+                var user = await _client.Management.GetUserAsync(userId, ct: cts.Token);
 
                 if (user == null)
                 {
                     return HandleRequestResult.Fail("Could not find user.");
                 }
 
-                var claims = new List<Claim>() {
-                    new Claim(ClaimTypes.NameIdentifier, userId)
-                };
+                var identity = new ClaimsIdentity(Scheme.Name);
+                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
 
                 if (!string.IsNullOrEmpty(user.Email))
                 {
-                    claims.Add(new Claim(ClaimTypes.Email, user.Email));
+                    identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
                 }
                 if (!string.IsNullOrEmpty(user.Phone))
                 {
-                    claims.Add(new Claim(ClaimTypes.HomePhone, user.Phone));
+                    identity.AddClaim(new Claim(ClaimTypes.HomePhone, user.Phone));
                 }
                 if (user.CreatedAt != null)
                 {
-                    claims.Add(new Claim(InternalClaimTypes.CreatedAt, user.CreatedAt.ToString()));
+                    identity.AddClaim(new Claim(InternalClaimTypes.CreatedAt, user.CreatedAt.ToString()));
                 }
                 if (user.UpdatedAt != null)
                 {
-                    claims.Add(new Claim(InternalClaimTypes.UpdatedAt, user.UpdatedAt.ToString()));
+                    identity.AddClaim(new Claim(InternalClaimTypes.UpdatedAt, user.UpdatedAt.ToString()));
                 }
                 if (user.LastLoginAt != null)
                 {
-                    claims.Add(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
+                    identity.AddClaim(new Claim(InternalClaimTypes.LastLoginAt, user.LastLoginAt.ToString()));
                 }
 
-                var identity = new ClaimsIdentity(claims, Options.SignInScheme);
+                var ticket = await CreateTicketAsync(identity, properties, user);
+                if (ticket == null)
+                {
+                    Log.SkippedDueToNullTicket(Logger);
+
+                    return HandleRequestResult.SkipHandler();
+                }
 
                 //var ticketContext = new PassageAuthenticationCreatingTicketContext(Context, Scheme, Options, principal, properties!, user.Email ?? string.Empty);
 
-                var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Options.SignInScheme);
+                //var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Options.SignInScheme);
 
                 // Raise TicketReceived event to give subscribers a chance to modify the ticket
                 await Events.TicketReceived(new TicketReceivedContext(Context, Scheme, Options, ticket)).ConfigureAwait(false);
@@ -206,5 +241,51 @@ namespace AspNet.Security.Identity.Passage
                 cts.Cancel();
             }
         }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
+        private async Task<AuthenticationTicket> CreateTicketAsync(
+            [NotNull] ClaimsIdentity identity,
+            [NotNull] AuthenticationProperties properties,
+            [NotNull] User user)
+        {
+            var principal = new ClaimsPrincipal(identity);
+            var ticket = new AuthenticationTicket(principal, properties, Scheme.Name);
+
+            var context = new PassageAuthenticatedContext(Context, Scheme, Options, ticket);
+
+            // Copy the attributes to the context object.
+            //foreach (var attribute in attributes)
+            //{
+            //    context.Attributes.Add(attribute);
+            //}
+
+            await Events.Authenticated(context);
+
+            // Note: return the authentication ticket associated
+            // with the notification to allow replacing the ticket.
+            return context.Ticket;
+        }
+    }
+
+    internal static partial class Log
+    {
+        [LoggerMessage(1, LogLevel.Information, "The authentication process was skipped because returned a null ticket was returned.")]
+        internal static partial void SkippedDueToNullTicket(ILogger logger);
+
+        [LoggerMessage(2, LogLevel.Warning, "The authentication failed because an invalid check_authentication response was received: " +
+                                            "the identity provider returned a {Status} response with the following payload: {Headers} {Body}.")]
+        internal static partial void InvalidCheckAuthenticationHttpError(
+            ILogger logger,
+            HttpStatusCode status,
+            string headers,
+            string body);
+
+        [LoggerMessage(3, LogLevel.Warning, "The authentication response was rejected because the identity provider " +
+                                            "returned an invalid check_authentication response.")]
+        internal static partial void InvalidCheckAuthenticationResponse(ILogger logger);
+
+        [LoggerMessage(4, LogLevel.Warning, "The authentication response was rejected because the identity provider " +
+                                            "declared the security assertion as invalid.")]
+        internal static partial void InvalidSecurityAssertion(ILogger logger);
     }
 }

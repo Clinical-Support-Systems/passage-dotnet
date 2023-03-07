@@ -5,6 +5,18 @@ namespace AspNet.Security.Identity.Passage
     public class PassageAuthenticationEvents : RemoteAuthenticationEvents
     {
         /// <summary>
+        /// Defines a notification invoked when the user is authenticated by the identity provider.
+        /// </summary>
+        public Func<PassageAuthenticatedContext, Task> OnAuthenticated { get; set; } = context => Task.CompletedTask;
+
+        /// <summary>
+        /// Defines a notification invoked when the user is authenticated by the identity provider.
+        /// </summary>
+        /// <param name="context">The context of the event carries information in and results out.</param>
+        /// <returns>Task to enable asynchronous execution</returns>
+        public virtual Task Authenticated(PassageAuthenticatedContext context) => OnAuthenticated(context);
+
+        /// <summary>
         /// Gets or sets the function that is invoked when the Authenticated method is invoked.
         /// </summary>
         public Func<PassageAuthenticationCreatingTicketContext, Task> OnCreatingTicket { get; set; } = _ => Task.CompletedTask;

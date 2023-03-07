@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace PassageIdentity.ExampleApp.Data;
+namespace PassageIdentity.ExampleApp.Areas.Identity.Data;
 
 public class PassageIdentityExampleAppContext : IdentityDbContext<IdentityUser>
 {

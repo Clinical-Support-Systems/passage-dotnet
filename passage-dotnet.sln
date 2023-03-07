@@ -24,9 +24,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassageIdentity.ExampleApp"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Middleware", "Middleware", "{2096D4C5-8670-494E-A0BD-102629880AAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNet.Security.Identity.Passage", "src\AspNet.Security.Identity.Passage\AspNet.Security.Identity.Passage.csproj", "{437B6952-87F7-402F-AEAF-5D22F9523BBB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNet.Security.Identity.Passage", "src\AspNet.Security.Identity.Passage\AspNet.Security.Identity.Passage.csproj", "{437B6952-87F7-402F-AEAF-5D22F9523BBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PassageIdentity.TagHelpers", "src\PassageIdentity.TagHelpers\PassageIdentity.TagHelpers.csproj", "{8B74F543-5C0B-4E4C-B934-3D2FC35E0A16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PassageIdentity.TagHelpers", "src\PassageIdentity.TagHelpers\PassageIdentity.TagHelpers.csproj", "{8B74F543-5C0B-4E4C-B934-3D2FC35E0A16}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{2CAFE3E4-5C05-4633-BA78-784457234A78}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,7 +62,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{70303E00-3D33-4B8F-AB1A-5327725D9ECA} = {4AFF6FEC-AAD4-49C1-9FBB-923EC9427932}
-		{CC8E9F6F-4D91-4514-9DFA-1CBB372A9DE3} = {4AFF6FEC-AAD4-49C1-9FBB-923EC9427932}
+		{CC8E9F6F-4D91-4514-9DFA-1CBB372A9DE3} = {2CAFE3E4-5C05-4633-BA78-784457234A78}
 		{180A72AD-B580-4B34-839E-1D6FEB857A3B} = {27F9D208-27E5-4648-9FEF-D03D44C4986E}
 		{437B6952-87F7-402F-AEAF-5D22F9523BBB} = {2096D4C5-8670-494E-A0BD-102629880AAF}
 		{8B74F543-5C0B-4E4C-B934-3D2FC35E0A16} = {4AFF6FEC-AAD4-49C1-9FBB-923EC9427932}
