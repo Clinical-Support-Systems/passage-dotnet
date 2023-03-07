@@ -6,7 +6,7 @@ This repo contains a .NET SDK for Passage Identity, TagHelpers and AspNetCore Au
 ## Getting Started
 
 1. Create account at [passage.id](https://passage.id/)
-2. Add `appsettings.Development.json` to ++PassageIdentity.Tests++ and ++PassageIdentity.ExampleApp++ that contains:
+2. Add `appsettings.Development.json` to **PassageIdentity.Tests** and **PassageIdentity.ExampleApp** that contains:
 
 ```json
 {
