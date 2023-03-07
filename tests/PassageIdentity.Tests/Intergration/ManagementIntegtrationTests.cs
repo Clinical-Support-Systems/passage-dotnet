@@ -83,6 +83,103 @@ public class ManagementIntegtrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task Can_Update_User()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var identifier = "KjhfIloBeaflZGd5ipm6oMge";
+
+        // Act
+        var user = await client.Management.GetUserAsync(identifier).ConfigureAwait(false);
+
+        var updatedApp = await client.Management.UpdateUserAsync(user).ConfigureAwait(false);
+
+        // Assert
+        user.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Id.ShouldBe(identifier)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Activate_User()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var identifier = "8kIAbF46fIee5jMuan3m9LO5";
+
+        // Act
+        var user = await client.Management.ActivateUserAsync(identifier).ConfigureAwait(false);
+
+        // Assert
+        user.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Id.ShouldBe(identifier),
+            x => x.Status.ShouldBe(UserStatus.Active)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Deactivate_User()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var identifier = "8kIAbF46fIee5jMuan3m9LO5";
+
+        // Act
+        var user = await client.Management.DeactivateUserAsync(identifier).ConfigureAwait(false);
+
+        // Assert
+        user.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Id.ShouldBe(identifier),
+            x => x.Status.ShouldBe(UserStatus.Inactive)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Delete_User()
+    { 
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var identifier = "8kIAbF46fIee5jMuan3m9LO5";
+
+        // Act
+        await client.Management.DeleteUserAsync(identifier).ConfigureAwait(false);
+
+        var users = await client.Management.GetUsersAsync(new ListPassageUsersQuery { }).ConfigureAwait(false);
+
+        // Assert
+        users.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Any(s => s.Id == identifier).ShouldBe(false)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Revoke_User_Tokens()
+    { 
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var identifier = "8kIAbF46fIee5jMuan3m9LO5";
+
+        // Act
+        await client.Management.RevokeTokensAsync(identifier).ConfigureAwait(false);
+
+        // Assert
+    }
+
+    [Fact]
     public async Task Can_Create_App()
     {
         // Arrange
@@ -98,6 +195,41 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         app.ShouldSatisfyAllConditions(
             x => x.ShouldNotBeNull()
         );
+    }
+
+    [Fact]
+    public async Task Can_Update_App()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var app = await client.Management.GetAppAsync().ConfigureAwait(false);
+
+        // Act
+        var updatedApp = await client.Management.UpdateAppAsync(app).ConfigureAwait(false);
+
+        // Assert
+        app.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Id.ShouldBeEquivalentTo(app.Id)
+        );
+    }
+
+
+    [Fact]
+    public async Task Can_Delete_App()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var appId = "";
+        
+        // Act
+        await client.Management.DeleteAppAsync(appId).ConfigureAwait(false);
+
+        // Assert
     }
 
     [Fact]
@@ -146,6 +278,178 @@ public class ManagementIntegtrationTests : IntegrationTestBase
         // Assert
         app.ShouldSatisfyAllConditions(
             x => x.ShouldNotBeNull()
+        );
+    }
+
+    [Fact]
+    public async Task Can_Claim_Test_App()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var appName = "";
+
+        // Act
+        await client.Management.ClaimTestAppAsync(appName).ConfigureAwait(false);
+
+        // Assert
+        
+    }
+
+    [Fact]
+    public async Task Can_Get_APIKeys()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        // Act
+        var apiKeys = await client.Management.GetAPIKeysAsync().ConfigureAwait(false);
+
+        // Assert
+        apiKeys.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Count().ShouldBeGreaterThan(0)
+        );
+    }
+
+
+    [Fact]
+    public async Task Can_Create_APIKey()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        // Act
+        var apiKey = await client.Management.CreateAPIKey("test").ConfigureAwait(false);
+
+        // Assert
+        apiKey.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Name.ShouldBeEquivalentTo("test")
+        );
+    }
+
+    [Fact]
+    public async Task Can_Delete_APIKey()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var apiKey = "";
+
+        // Act
+        await client.Management.DeleteAPIKeyAsync(apiKey).ConfigureAwait(false);
+
+
+        var keys = await client.Management.GetAPIKeysAsync().ConfigureAwait(false);
+
+        // Assert
+        keys.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Any(k => k.Id == apiKey).ShouldBe(false)
+        );
+    }
+
+
+    [Fact]
+    public async Task Can_Get_Admins()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        // Act
+        var admins = await client.Management.GetAdminsAsync().ConfigureAwait(false);
+
+
+        // Assert
+        admins.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Count().ShouldBeGreaterThan(0)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Get_Admin()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var adminId = "";
+
+        // Act
+        var admin = await client.Management.GetAdminAsync(adminId).ConfigureAwait(false);
+
+
+        // Assert
+        admin.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Admin.Id.ShouldBeEquivalentTo(adminId)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Create_Admin()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var email = "testAdmin";
+
+        // Act
+        var admin = await client.Management.CreateAdminAsync(email).ConfigureAwait(false);
+
+
+        // Assert
+        admin.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Email.ShouldBeEquivalentTo(email)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Delete_Admin()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var adminId = "";
+
+        // Act
+         await client.Management.DeleteAdminAsync(adminId).ConfigureAwait(false);
+
+        var admins = await client.Management.GetAdminsAsync().ConfigureAwait(false);
+
+        // Assert
+        admins.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Any(k => k.Id == adminId).ShouldBe(false)
+        );
+    }
+
+    [Fact]
+    public async Task Can_Get_PaginatedEvents()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger>();
+        var client = new PassageClient(logger, HttpClientFactory, PassageConfig);
+
+        var adminId = "";
+
+        // Act
+        var events = await client.Management.GetPaginatedEventsAsync(new PassagePaginatedEventsQuery { }).ConfigureAwait(false);
+
+        // Assert
+        events.ShouldSatisfyAllConditions(
+            x => x.ShouldNotBeNull(),
+            x => x.Count().ShouldBeGreaterThan(0)
         );
     }
 }

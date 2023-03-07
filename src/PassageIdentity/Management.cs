@@ -118,7 +118,7 @@ public class PassageManagement
     }
 
     /// <summary>
-    /// list apps for current authorized user
+    /// Get app information
     /// </summary>
     /// <param name="ct"></param>
     /// <returns></returns>
