@@ -28,6 +28,12 @@ namespace PassageIdentity.TagHelpers
         [HtmlAttributeName("on-success")]
         public string? OnSuccess { get; set; }
 
+        /// <summary>
+        /// This is the path to the Passage Elements script, by default https://psg.so/web.js
+        /// </summary>
+        [HtmlAttributeName("src")]
+        public string ScriptPath { get; set; } = "https://psg.so/web.js";
+
         public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (context is null)
@@ -40,7 +46,7 @@ namespace PassageIdentity.TagHelpers
                 throw new ArgumentNullException(nameof(output));
             }
 
-            var script = "<script src=\"https://psg.so/web.js\" defer></script>";
+            var script = $"<script src=\"{ScriptPath}\" defer></script>";
             output.PreElement.SetHtmlContent(script);
 
             if (!string.IsNullOrEmpty(AppId)) output.Attributes.Add(new TagHelperAttribute("app-id", AppId));
